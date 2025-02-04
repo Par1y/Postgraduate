@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.vo
+package cn.sicnu.Postgraduate.core.obj
 
 /*
     UserVO，前端返回用
@@ -6,6 +6,7 @@ package cn.sicnu.Postgraduate.core.vo
 public data class UserVO {
     private var uid: Long? = null
     private var username: String? = null
+
 
     //getter & setter
     public fun getUid(): Long? {

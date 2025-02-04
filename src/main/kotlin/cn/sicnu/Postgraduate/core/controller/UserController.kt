@@ -20,7 +20,7 @@ import cn.sicnu.Postgraduate.service.UserService
     alterUser: commonResult<UserVO>
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/v1/user")
 class UserController {
     companion object{
         //日志模块

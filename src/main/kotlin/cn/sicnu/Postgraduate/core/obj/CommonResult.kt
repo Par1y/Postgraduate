@@ -1,8 +1,8 @@
-package cn.sicnu.Postgraduate.core.vo
+package cn.sicnu.Postgraduate.core.obj
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.util.Assert;
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.springframework.util.Assert
+import java.io.Serializable
 
 /*
     统一结果返回类

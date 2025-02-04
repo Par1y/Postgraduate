@@ -1,17 +1,17 @@
-package cn.sicnu.Postgraduate.core.vo
+package cn.sicnu.Postgraduate.core.obj
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType
+import com.baomidou.mybatisplus.annotation.TableField
+import com.baomidou.mybatisplus.annotation.TableId
+import com.baomidou.mybatisplus.annotation.TableName
 
-@Data
-@TableName("`user`")
 /*
     User，后端内部使用
  */
+@Data
+@TableName("`user`")
 public data class User {
-    @TableId(value = "id", type = IdType.INPUT)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private var uid: Long? = null
 
     @TableField
@@ -19,6 +19,7 @@ public data class User {
 
     @TableField
     private var password: String? = null
+
 
     //getter & setter
     public fun getUid(): Long? {
