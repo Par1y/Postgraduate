@@ -10,7 +10,7 @@ import cn.sicnu.Postgraduate.service.PlanService
 /*
     /plan接口控制器
 
-    GET /{pid} 按pid查询计划
+    GET /{pid} 查询单计划
     getPlan: commonResult<Plan>
     
     GET / 按条件查询计划
@@ -39,7 +39,7 @@ class PlanController {
     }
 
     @GetMapping("/")
-    fun getPlanBy(@RequestParam uid: Long?, @RequestParam beginDate: LocalDateTime, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
+    fun getPlanBy(@RequestParam uid: Long?, @RequestParam beginDate: LocalDateTime?, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
 

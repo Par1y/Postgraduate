@@ -19,6 +19,9 @@ import cn.sicnu.Postgraduate.service.UserService
 
     POST /{uid} 用户修改
     alterUser: CommonResult<UserVO>
+
+    DELETE /{uid} 用户删除
+    deleteUser: CommonResult<UserVO>
  */
 @RestController
 @RequestMapping("/v1/user")
