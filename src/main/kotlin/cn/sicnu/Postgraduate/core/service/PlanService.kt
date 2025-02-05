@@ -39,7 +39,15 @@ class UserService {
     }
 
     fun getPlan(pid: Long): commonResult<Plan> {
-        TODO=实现单计划查找
+        private var plan: Plan = PlanMapper.selectById(pid)
+        if(plan != null) {
+            //返回
+            return CommonResult.success(plan)
+        }else{
+            //无此计划
+            logger.info("getPlan: pid {}, {}", pid, MESSAGE_MESSING)
+            return CommonResult.error(CODE_MISSING, MESSAGE_MESSING)
+        }
     }
 
     fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
@@ -47,14 +55,69 @@ class UserService {
     }
 
     fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
-        TODO=实现新建计划
+        private var newPlan: Plan = new Plan()
+        newPlan.setUid(uid).setDate(date).setContent(content)
+        private val result: int = PlanMapper.insert(newPlan)
+        if(result == 1) {
+            return CommonResult.success(newPlan)
+        }else if(result < 1){
+            //插入失败
+            logger.error("newPlan: uid {}, date {}, {} 插入失败", uid, date, MESSAGE_DATABASE_ERROR)
+            return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+        }else{
+            //意外情况
+            logger.error("newPlan: uid {}, date {}, {} 插入行数大于1", pid, date, MESSAGE_DATABASE_ERROR)
+            return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+        }
     }
 
     fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
-        TODO=实现修改计划
+        if(date == null && content == null) {
+            logger.info("alterPlan: pid {}, {}", pid, MESSAGE_UNCHANGED)
+            return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
+        }
+        private var updatePlan: Plan = PlanMapper.selectById(pid)
+        if(updatePlan != null) {
+            //比对修改内容
+            if(date != null) updatePlan.setDate(date)
+            if(content != null) updatePlan.setContent(content)
+            //修改
+            private val result = PlanMapper.updateById(updatePlan)
+            if(result == 1) {
+                return CommonResult.success(updatePlan)
+            }else if(result < 1) {
+                //修改失败
+                logger.error("alterPlan: pid {}, {} 修改失败", pid, MESSAGE_DATABASE_ERROR)
+                return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            }else{
+                //意外情况
+                logger.error("alterPlan: pid {}, {} 修改行数大于1", pid, MESSAGE_DATABASE_ERROR)
+                return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            }
+        }else{
+            //无此计划
+            logger.info("alterPlan: pid {}, {}", pid, MESSAGE_MESSING)
+            return CommonResult.error(CODE_MISSING, MESSAGE_MESSING)
+        }
     }
 
     fun deletePlan(pid: Long): CommonResult<Plan> {
-        TODO=实现删除计划
+        private var dPlan: Plan = PlanMapper.selectById(pid)
+        if(dPlan != null) {
+            private val result: int = PlanMapper.deleteById(pid)
+            if(result == 1) {
+                return CommonResult.success(dPlan)
+            }else if(result < 1) {
+                logger.info("deletePlan: pid {}, {} 删除失败", pid, MESSAGE_DATABASE_ERROR)
+                return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            }else{
+                //意外情况
+                logger.error("deletePlan: pid {}, {} 修改行数大于1", pid, MESSAGE_DATABASE_ERROR)
+                return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+        }else{
+            //无此计划
+            logger.info("deletePlan: pid {}, {}", pid, MESSAGE_MESSING)
+            return CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+        }
     }
 }

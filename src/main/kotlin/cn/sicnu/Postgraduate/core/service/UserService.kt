@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*
     验证用户名密码
     verifyUser: CommonResult<UserVO>，成功包装对象，失败空对象&错误信息
 
+    添加用户
+    newUser: CommonResult<UserVO>，成功包装对象，失败空对象&错误信息
+
     修改用户
     alterUser: CommonResult<UserVO>，成功包装对象，失败空对象&错误信息
 
@@ -39,10 +42,10 @@ class UserService {
     }
 
     fun getUser(uid: Long): CommonResult<UserVO> {
-        var user: User = UserMapper.selectById(uid)
+        private var user: User = UserMapper.selectById(uid)
         if(user != null) {
             //返回
-            var vo: UserVO = new UserVO()
+            private var vo: UserVO = new UserVO()
             vo.setUid(user.getUid()).setUsername(user.getUsername())
             return CommonResult.success(vo)
         }else{
@@ -53,11 +56,11 @@ class UserService {
     }
     
     fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
-        var user: User = UserMapper.selectById(uid)
+        private var user: User = UserMapper.selectById(uid)
         if(user != null) {
             //验证密码一致
             if(user.password.equals(password)) {
-                var vo: UserVO = new UserVO()
+                private var vo: UserVO = new UserVO()
                 vo.setUid(user.getUid()).setUsername(user.getUsername())
                 return CommonResult.success(vo)
             }else{
@@ -72,21 +75,38 @@ class UserService {
         }
     }
 
+    fun newUser(username: String, password: String) {
+        private var newUser: User = new User()
+        newUser.setUsername(username).setPassword(password)
+        private val result: int = UserMapper.insert(newUser)
+        if(result == 1) {
+            return CommonResult.success(newPlan)
+        }else if(result < 1){
+            //插入失败
+            logger.error("newUser: username {}, {} 插入失败", username, MESSAGE_DATABASE_ERROR)
+            return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+        }else{
+            //意外情况
+            logger.error("newUser: username {}, {} 插入行数大于1", username, MESSAGE_DATABASE_ERROR)
+            return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+        }
+    }
+
     fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO> {
         //未改动
-        if(username = null && password = null) {
+        if(username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
             return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
         }
-        var updateUser: User = UserMapper.selectById(uid)
-        if(updateuser != null) {
+        private var updateUser: User = UserMapper.selectById(uid)
+        if(updateUser != null) {
             //比对修改内容
             if(username != null) updateUser.setUsername(username)
             if(password != null) updateUser.setPassword(password)
             //修改
-            val result: int = UserMapper.updateById(updateUser)
+            private val result: int = UserMapper.updateById(updateUser)
             if(result == 1) {
-                var vo: UserVO = new UserVO()
+                private var vo: UserVO = new UserVO()
                 vo.setUid(updateUser.getUid()).setUsername(updateUser.getUsername())
                 return CommonResult.success(vo)
             }else if(result < 1) {
@@ -106,16 +126,20 @@ class UserService {
     }
 
     fun deleteUser(uid: Long): CommonResult<UserVO> {
-        var user: User = UserMapper.selectById(uid)
+        private var user: User = UserMapper.selectById(uid)
         if(user != null) {
-            val result: int = UserMapper.deleteById(uid)
+            private val result: int = UserMapper.deleteById(uid)
             if(result == 1) {
-                var vo: UserVO = new UserVO()
+                private var vo: UserVO = new UserVO()
                 vo.setUid(user.getUid()).setUsername(user.getUsername())
                 return CommonResult.success(vo)
-            }else{
+            }else if(result < 1){
                 //删除失败
-                logger.error("deleteUser: uid {}, {}", uid, MESSAGE_DATABASE_ERROR)
+                logger.error("deleteUser: uid {}, {} 删除失败", uid, MESSAGE_DATABASE_ERROR)
+                return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            }else{
+                //意外情况
+                logger.error("deleteUser: uid {}, {} 修改行数大于1", uid, MESSAGE_DATABASE_ERROR)
                 return CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
         }else{
