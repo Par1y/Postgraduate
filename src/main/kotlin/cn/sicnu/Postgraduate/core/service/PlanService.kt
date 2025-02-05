@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*
     修改计划
     alterPlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
 
-    删除用户
+    删除计划
     deletePlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
  */
 @Service
@@ -38,5 +38,23 @@ class UserService {
         private final val MESSAGE_DATABASE_ERROR: String = "数据库错误"
     }
 
-    TODO=实现计划服务
+    fun getPlan(pid: Long): commonResult<Plan> {
+        TODO=实现单计划查找
+    }
+
+    fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
+        TODO=实现批量计划查找
+    }
+
+    fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
+        TODO=实现新建计划
+    }
+
+    fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
+        TODO=实现修改计划
+    }
+
+    fun deletePlan(pid: Long): CommonResult<Plan> {
+        TODO=实现删除计划
+    }
 }

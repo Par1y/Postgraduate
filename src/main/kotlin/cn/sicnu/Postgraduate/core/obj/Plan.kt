@@ -18,7 +18,7 @@ public data class User {
     private var uid: Long? = null
 
     @TableField(fill = FieldFill.INSERT)
-    private Date date;
+    private date: LocalDateTime? = null
 
     @TableField
     private var content: String? = null
@@ -49,7 +49,7 @@ public data class User {
         this.uid = uid
     }
 
-    public fun setDate(date: Date): Unit {
+    public fun setDate(date: LocalDateTime): Unit {
         this.date = date
     }
 

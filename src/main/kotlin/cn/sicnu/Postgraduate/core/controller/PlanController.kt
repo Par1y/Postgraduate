@@ -34,27 +34,27 @@ class PlanController {
     private planService: PlanService
 
     @GetMapping("/{pid}")
-    fun getPlan(@PathVariable pid: Long): commonResult<PlanVO> {
+    fun getPlan(@PathVariable pid: Long): commonResult<Plan> {
         return planService.getPlan(pid)
     }
 
     @GetMapping("/")
-    fun getPlanBy() {
-        TODO=uid或时间段等查找
+    fun getPlanBy(@RequestParam uid: Long?, @RequestParam beginDate: LocalDateTime, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
+        return planService.getPlanBy(uid, beginDate, endDate)
     }
 
     @PostMapping("/")
-    fun newPlan() {
-        TODO=新建计划
+    fun newPlan(@RequestParam uid: Long, @RequestParam date: LocalDateTime, @RequestParam content: String): CommonResult<Plan> {
+        return planService.newPlan(uid, date, content)
     }
 
     @PostMapping("/{pid}")
-    fun alterPlan() {
-        TODO=修改计划
+    fun alterPlan(@PathVariable pid: Long, @RequestParam date: LocalDateTime?, RequestParam content: String?): CommonResult<Plan> {
+        return planService.alterPlan(pid, date, content)
     }
 
     @DeleteMapping("/{pid}")
-    fun deletePlan(@PathVariable pid: Long) {
+    fun deletePlan(@PathVariable pid: Long): CommonResult<Plan> {
         return planService.deletePlan(pid)
     }
 }
