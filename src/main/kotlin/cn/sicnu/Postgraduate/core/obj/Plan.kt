@@ -1,5 +1,6 @@
 package cn.sicnu.Postgraduate.core.obj
 
+import java.time.LocalDateTime
 import com.baomidou.mybatisplus.annotation.IdType
 import com.baomidou.mybatisplus.annotation.TableField
 import com.baomidou.mybatisplus.annotation.TableId

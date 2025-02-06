@@ -1,5 +1,6 @@
 package cn.sicnu.Postgraduate.core.controller
 
+import java.time.LocalDateTime
 import org.springframework.boot.beans.factory.annotation.Autowired
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -39,7 +40,7 @@ class PlanController {
     }
 
     @GetMapping("/")
-    fun getPlanBy(@RequestParam uid: Long?, @RequestParam beginDate: LocalDateTime?, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
+    fun getPlanBy(@RequestParam uid: Long, @RequestParam beginDate: LocalDateTime?, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
 

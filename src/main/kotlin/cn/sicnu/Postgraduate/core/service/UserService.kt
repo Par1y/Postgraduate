@@ -41,8 +41,11 @@ class UserService {
         private final val MESSAGE_DATABASE_ERROR: String = "数据库错误"
     }
 
+    @Autowired
+    private userMapper: UserMapper
+
     fun getUser(uid: Long): CommonResult<UserVO> {
-        private var user: User = UserMapper.selectById(uid)
+        private var user: User = userMapper.selectById(uid)
         if(user != null) {
             //返回
             private var vo: UserVO = new UserVO()
@@ -56,7 +59,7 @@ class UserService {
     }
     
     fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
-        private var user: User = UserMapper.selectById(uid)
+        private var user: User = userMapper.selectById(uid)
         if(user != null) {
             //验证密码一致
             if(user.password.equals(password)) {
@@ -78,7 +81,7 @@ class UserService {
     fun newUser(username: String, password: String) {
         private var newUser: User = new User()
         newUser.setUsername(username).setPassword(password)
-        private val result: int = UserMapper.insert(newUser)
+        private val result: int = userMapper.insert(newUser)
         if(result == 1) {
             return CommonResult.success(newPlan)
         }else if(result < 1){
@@ -98,13 +101,13 @@ class UserService {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
             return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
         }
-        private var updateUser: User = UserMapper.selectById(uid)
+        private var updateUser: User = userMapper.selectById(uid)
         if(updateUser != null) {
             //比对修改内容
             if(username != null) updateUser.setUsername(username)
             if(password != null) updateUser.setPassword(password)
             //修改
-            private val result: int = UserMapper.updateById(updateUser)
+            private val result: int = userMapper.updateById(updateUser)
             if(result == 1) {
                 private var vo: UserVO = new UserVO()
                 vo.setUid(updateUser.getUid()).setUsername(updateUser.getUsername())
@@ -126,9 +129,9 @@ class UserService {
     }
 
     fun deleteUser(uid: Long): CommonResult<UserVO> {
-        private var user: User = UserMapper.selectById(uid)
+        private var user: User = userMapper.selectById(uid)
         if(user != null) {
-            private val result: int = UserMapper.deleteById(uid)
+            private val result: int = userMapper.deleteById(uid)
             if(result == 1) {
                 private var vo: UserVO = new UserVO()
                 vo.setUid(user.getUid()).setUsername(user.getUsername())
