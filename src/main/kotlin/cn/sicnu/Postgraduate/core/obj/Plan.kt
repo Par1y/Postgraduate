@@ -9,22 +9,20 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     Plan
  */
-@Data
 @TableName("`plan`")
-public data class Plan {
+data class Plan (
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private var pid: Long? = null
+    private var pid: Long? = null,
 
     @TableField
-    private var uid: Long? = null
+    private var uid: Long? = null,
 
     // @TableField(fill = FieldFill.INSERT)
-    private date: LocalDateTime? = null
+    private var date: LocalDateTime? = null,
 
     @TableField
     private var content: String? = null
-
-
+) {
     //getter & setter
     public fun getPid(): Long? {
         return this.pid
@@ -34,7 +32,7 @@ public data class Plan {
         return this.uid
     }
     
-    public fun getDate(): Date? {
+    public fun getDate(): LocalDateTime? {
         return this.date
     }
 

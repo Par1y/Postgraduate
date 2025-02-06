@@ -9,24 +9,23 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     Dynamic
  */
-@Data
 @TableName("`dynamic`")
-public data class Dynamic {
+data class Dynamic(
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private var did: Long? = null
+    var did: Long? = null,
 
     @TableField
-    private var uid: Long? = null
-
-    // @TableField(fill = FieldFill.INSERT)
-    private date: LocalDateTime? = null
+    var uid: Long? = null,
 
     @TableField
-    private var content: String? = null
+    var date: LocalDateTime? = null,
 
     @TableField
-    private var replyId: Long? = null
+    var content: String? = null,
 
+    @TableField
+    var replyId: Long? = null
+) {
     //getter & setter
     public fun getDid(): Long? {
         return this.did
@@ -36,7 +35,7 @@ public data class Dynamic {
         return this.uid
     }
     
-    public fun getDate(): Date? {
+    public fun getDate(): LocalDateTime? {
         return this.date
     }
 

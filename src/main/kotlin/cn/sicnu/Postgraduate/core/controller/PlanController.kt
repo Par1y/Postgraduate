@@ -1,12 +1,14 @@
 package cn.sicnu.Postgraduate.core.controller
 
 import java.time.LocalDateTime
-import org.springframework.boot.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Autowired
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 
-import cn.sicnu.Postgraduate.service.PlanService
+import cn.sicnu.Postgraduate.core.service.PlanService
+import cn.sicnu.Postgraduate.core.obj.CommonResult
+import cn.sicnu.Postgraduate.core.obj.Plan
 
 /*
     /plan接口控制器
@@ -25,37 +27,45 @@ import cn.sicnu.Postgraduate.service.PlanService
  */
 @RestController
 @RequestMapping("/v1/plan")
-class PlanController {
+class PlanController(private val planService: PlanService) {
     companion object{
         //日志模块
-        private final logger: Logger = LoggerFactory.getLogger(planController.class)
+        private val logger: Logger = LoggerFactory.getLogger(PlanController::class.java)
     }
 
-    @Autowired
-    private planService: PlanService
-
     @GetMapping("/{pid}")
-    fun getPlan(@PathVariable pid: Long): commonResult<Plan> {
+    fun getPlan(@PathVariable("pid") pid: Long): CommonResult<Plan> {
         return planService.getPlan(pid)
     }
 
     @GetMapping("/")
-    fun getPlanBy(@RequestParam uid: Long, @RequestParam beginDate: LocalDateTime?, @RequestParam endDate: LocalDateTime?): CommonResult<List<Plan>> {
+    fun getPlanBy(
+        @RequestParam uid: Long,
+        @RequestParam beginDate: LocalDateTime?,
+        @RequestParam endDate: LocalDateTime?
+        ): CommonResult<List<Plan>> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
 
     @PostMapping("/")
-    fun newPlan(@RequestParam uid: Long, @RequestParam date: LocalDateTime, @RequestParam content: String): CommonResult<Plan> {
+    fun newPlan(
+        @RequestParam uid: Long,
+        @RequestParam date: LocalDateTime,
+        @RequestParam content: String
+        ): CommonResult<Plan> {
         return planService.newPlan(uid, date, content)
     }
 
     @PostMapping("/{pid}")
-    fun alterPlan(@PathVariable pid: Long, @RequestParam date: LocalDateTime?, RequestParam content: String?): CommonResult<Plan> {
+    fun alterPlan(@PathVariable("pid") pid: Long,
+    @RequestParam date: LocalDateTime?,
+    @RequestParam content: String?
+    ): CommonResult<Plan> {
         return planService.alterPlan(pid, date, content)
     }
 
     @DeleteMapping("/{pid}")
-    fun deletePlan(@PathVariable pid: Long): CommonResult<Plan> {
+    fun deletePlan(@PathVariable("pid") pid: Long): CommonResult<Plan> {
         return planService.deletePlan(pid)
     }
 }

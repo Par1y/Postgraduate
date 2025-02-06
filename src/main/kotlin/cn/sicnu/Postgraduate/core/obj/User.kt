@@ -8,19 +8,17 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     User，后端内部使用
  */
-@Data
 @TableName("`user`")
-public data class User {
+data class User (
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private var uid: Long? = null
+    private var uid: Long? = null,
 
     @TableField
-    private var username: String? = null
+    private var username: String? = null,
 
     @TableField
     private var password: String? = null
-
-
+) {
     //getter & setter
     public fun getUid(): Long? {
         return this.uid

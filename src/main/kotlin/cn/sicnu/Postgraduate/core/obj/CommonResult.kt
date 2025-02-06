@@ -1,74 +1,77 @@
 package cn.sicnu.Postgraduate.core.obj
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.springframework.util.Assert
 import java.io.Serializable
 
 /*
     统一结果返回类
     **工具类**
  */
-public class CommonResult<T> implements Serializable {
+class CommonResult<T> : Serializable {
     companion object {
-        private final val Integer CODE_SUCCESS = Integer.valueOf(0)
+        private val CODE_SUCCESS: Int = 0
+        private val CODE_UNKNOWN_ERR: Int = -255
+        private val MESSAGE_UNKNOWN_ERR: String = "未知错误"
 
-        //规范返回对象
-        public fun <T> error(result: CommonResult<*>): CommonResult<T> {
-            return error(result.code, result.message)
+        // 规范返回对象
+        fun <T> error(result: CommonResult<*>): CommonResult<T> {
+            val code: Int = result.code ?: CODE_UNKNOWN_ERR
+            val message: String = result.message ?: MESSAGE_UNKNOWN_ERR
+            return error(code, message)
         }
 
-        public fun <T> error(code: Integer, message: String) {
-            Assert.isTrue(!CODE_SUCCESS.equals(code), "code不为错误码")
-            result: CommonResult<T> = new CommonResult<>()
+        fun <T> error(code: Int, message: String): CommonResult<T> {
+            require(!CODE_SUCCESS.equals(code)) { "code不为错误码" }
+            val result = CommonResult<T>()
             result.code = code
             result.message = message
             return result
         }
 
-        public fun <T> success(T data): CommonResult<T> {
-            result: CommonResult<T> = new CommonResult<>()
-            result.code = CODE_SUCCESS;
+        fun <T> success(data: T): CommonResult<T> {
+            val result = CommonResult<T>()
+            result.code = CODE_SUCCESS
             result.data = data
             result.message = "成功"
             return result
         }
     }
 
-    private var code: Integer? = null
+    private var code: Int? = null
     private var message: String? = null
     private var data: T? = null
 
     @JsonIgnore
-    private isSuccess(): Boolean {
+    private fun isSuccess(): Boolean {
         return CODE_SUCCESS.equals(code)
     }
 
     @JsonIgnore
-    private isError(): Boolean {
+    private fun isError(): Boolean {
         return !isSuccess()
     }
 
-    public getCode():Integer? {
+    fun getCode(): Int? {
         return this.code
     }
 
-    public getMessage(): String? {
+    fun getMessage(): String? {
         return this.message
     }
 
-    public getData(): T? {
+    fun getData(): T? {
         return this.data
     }
 
-    public setCode(code: Integer): Unit {
+    fun setCode(code: Int) {
         this.code = code
     }
 
-    public setMessage(message: String): Unit {
+    fun setMessage(message: String) {
         this.message = message
     }
 
-    public setData(data: T): Unit {
+    fun setData(data: T) {
         this.data = data
     }
 }

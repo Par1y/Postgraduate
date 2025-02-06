@@ -10,7 +10,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
@@ -25,10 +25,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-logging")
 	implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.10.1")
 	implementation("com.baomidou:mybatis-plus-boot-starter-test:3.5.10.1")
-	compile ("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testImplementation("org.springframework.boot:spring-boot-starter-security")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
