@@ -1,3 +1,3 @@
-public interface PlanMapper extends BaseMapper<Plan> {
+public interface PlanMapper : BaseMapper<Plan> {
     
 }

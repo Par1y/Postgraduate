@@ -1,3 +1,3 @@
-public interface UserMapper extends BaseMapper<User> {
+public interface UserMapper : BaseMapper<User> {
 
 }

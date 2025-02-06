@@ -7,13 +7,13 @@ import com.baomidou.mybatisplus.annotation.TableId
 import com.baomidou.mybatisplus.annotation.TableName
 
 /*
-    Plan
+    Dynamic
  */
 @Data
-@TableName("`plan`")
-public data class Plan {
+@TableName("`dynamic`")
+public data class Dynamic {
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private var pid: Long? = null
+    private var did: Long? = null
 
     @TableField
     private var uid: Long? = null
@@ -24,10 +24,12 @@ public data class Plan {
     @TableField
     private var content: String? = null
 
+    @TableField
+    private var replyId: Long? = null
 
     //getter & setter
-    public fun getPid(): Long? {
-        return this.pid
+    public fun getDid(): Long? {
+        return this.did
     }
 
     public fun getUid(): Long? {
@@ -42,8 +44,12 @@ public data class Plan {
         return this.content
     }
 
-    public fun setPid(pid: Long): Unit {
-        this.pid = pid
+    public fun getReplyDid(): Long? {
+        return this.replyId
+    }
+
+    public fun setDid(did: Long): Unit {
+        this.did = did
     }
 
     public fun setUid(uid: Long): Unit {
@@ -56,5 +62,9 @@ public data class Plan {
 
     public fun setContent(content: String): Unit {
         this.content = content
+    }
+
+    public fun setReplyId(replyId: Long): Unit {
+        this.replyId = replyId
     }
 }

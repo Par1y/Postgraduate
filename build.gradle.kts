@@ -23,8 +23,9 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.springframework.boot:spring-boot-starter-logging")
-	implementation('com.baomidou:mybatis-plus-spring-boot3-starter:3.5.10.1')
-	implementation 'com.baomidou:mybatis-plus-boot-starter-test:3.5.10.1'
+	implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.10.1")
+	implementation("com.baomidou:mybatis-plus-boot-starter-test:3.5.10.1")
+	compile ("org.springframework.boot:spring-boot-starter-security")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

@@ -4,6 +4,7 @@ import org.springframework.boot.beans.factory.annotation.Autowired
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
+import cn.sicnu.Postgraduate.core.obj.User
 
 /*
     用户服务
