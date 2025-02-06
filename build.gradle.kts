@@ -23,7 +23,7 @@ dependencies {
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.springframework.boot:spring-boot-starter-logging")
-	implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.10.1")
+	implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.9")
 	implementation("com.baomidou:mybatis-plus-boot-starter-test:3.5.10.1")
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
 	runtimeOnly("org.postgresql:postgresql")
