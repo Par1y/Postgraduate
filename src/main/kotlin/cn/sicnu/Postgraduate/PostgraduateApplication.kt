@@ -6,6 +6,7 @@ import org.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
 @MapperScan("cn.sicnu.Postgraduate.core.mapper")
+@EnableCaching
 class PostgraduateApplication
 
 fun main(args: Array<String>) {
