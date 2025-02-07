@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate
+package cn.sicnu.postgraduate
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest

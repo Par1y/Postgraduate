@@ -1,7 +1,7 @@
-package cn.sicnu.Postgraduate.core.mapper
+package cn.sicnu.postgraduate.core.mapper
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper
-import cn.sicnu.Postgraduate.core.obj.Dynamic
+import cn.sicnu.postgraduate.core.entity.Dynamic
 
 public interface DynamicMapper : BaseMapper<Dynamic> {
     

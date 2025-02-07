@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.obj
+package cn.sicnu.postgraduate.core.entity
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable

@@ -1,13 +1,12 @@
-package cn.sicnu.Postgraduate.core.controller
+package cn.sicnu.postgraduate.core.controller
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 
-import cn.sicnu.Postgraduate.core.service.UserService
-import cn.sicnu.Postgraduate.core.obj.CommonResult
-import cn.sicnu.Postgraduate.core.obj.UserVO
+import cn.sicnu.postgraduate.core.service.UserServiceImpl
+import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.core.entity.UserVO
 
 /*
     /user接口控制器
@@ -27,7 +26,7 @@ import cn.sicnu.Postgraduate.core.obj.UserVO
  */
 @RestController
 @RequestMapping("/v1/user")
-class UserController(private val userService: UserService) {
+class UserController(private val userService: UserServiceImpl) {
 
     companion object {
         // 日志模块

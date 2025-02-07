@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.service
+package cn.sicnu.postgraduate.core.service
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
 import org.slf4j.Logger
@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
-import cn.sicnu.Postgraduate.core.mapper.PlanMapper
-import cn.sicnu.Postgraduate.core.obj.Plan
-import cn.sicnu.Postgraduate.core.obj.CommonResult
+import cn.sicnu.postgraduate.core.mapper.PlanMapper
+import cn.sicnu.postgraduate.core.entity.Plan
+import cn.sicnu.postgraduate.core.entity.CommonResult
 
 /*
     计划服务
@@ -28,7 +28,7 @@ import cn.sicnu.Postgraduate.core.obj.CommonResult
     deletePlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
  */
 @Service
-class PlanService(private val planMapper: PlanMapper) {
+class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
 
     companion object {
         // 日志模块
@@ -47,7 +47,7 @@ class PlanService(private val planMapper: PlanMapper) {
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
-    fun getPlan(pid: Long): CommonResult<Plan> {
+    override fun getPlan(pid: Long): CommonResult<Plan> {
         val plan: Plan? = planMapper.selectById(pid)
         return if (plan != null) {
             CommonResult.success(plan)
@@ -58,7 +58,7 @@ class PlanService(private val planMapper: PlanMapper) {
         }
     }
 
-    fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
+    override fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -97,7 +97,7 @@ class PlanService(private val planMapper: PlanMapper) {
         return CommonResult.success(plans)
     }
 
-    fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
+    override fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
         val newPlan = Plan().apply {
             setUid(uid)
             setDate(date)
@@ -118,7 +118,7 @@ class PlanService(private val planMapper: PlanMapper) {
         }
     }
 
-    fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
+    override fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
         if (date == null && content == null) {
             logger.info("alterPlan: pid {}, {}", pid, MESSAGE_UNCHANGED)
             return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
@@ -150,7 +150,7 @@ class PlanService(private val planMapper: PlanMapper) {
         }
     }
 
-    fun deletePlan(pid: Long): CommonResult<Plan> {
+    override fun deletePlan(pid: Long): CommonResult<Plan> {
         val dPlan: Plan? = planMapper.selectById(pid)
         return if (dPlan != null) {
             val result: Int = planMapper.deleteById(pid)

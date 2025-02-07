@@ -1,14 +1,13 @@
-package cn.sicnu.Postgraduate.core.controller
+package cn.sicnu.postgraduate.core.controller
 
 import java.time.LocalDateTime
-import org.springframework.beans.factory.annotation.Autowired
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 
-import cn.sicnu.Postgraduate.core.service.PlanService
-import cn.sicnu.Postgraduate.core.obj.CommonResult
-import cn.sicnu.Postgraduate.core.obj.Plan
+import cn.sicnu.postgraduate.core.service.PlanService
+import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.core.entity.Plan
 
 /*
     /plan接口控制器

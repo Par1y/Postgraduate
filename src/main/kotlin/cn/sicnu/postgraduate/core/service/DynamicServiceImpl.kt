@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.service
+package cn.sicnu.postgraduate.core.service
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
 import org.slf4j.Logger
@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
-import cn.sicnu.Postgraduate.core.mapper.DynamicMapper
-import cn.sicnu.Postgraduate.core.obj.Dynamic
-import cn.sicnu.Postgraduate.core.obj.CommonResult
+import cn.sicnu.postgraduate.core.mapper.DynamicMapper
+import cn.sicnu.postgraduate.core.entity.Dynamic
+import cn.sicnu.postgraduate.core.entity.CommonResult
 
 /*
     动态服务
@@ -28,11 +28,11 @@ import cn.sicnu.Postgraduate.core.obj.CommonResult
     deleteDynamic: CommonResult<Dynamic>，成功包装对象，失败空对象&错误信息
  */
 @Service
-class DynamicService(private val dynamicMapper: DynamicMapper) {
+class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicService {
 
     companion object {
         // 日志模块
-        private val logger: Logger = LoggerFactory.getLogger(DynamicService::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(DynamicServiceImpl::class.java)
 
         // 常量声明
         private const val CODE_SUCCESS: Int = 0
@@ -47,7 +47,7 @@ class DynamicService(private val dynamicMapper: DynamicMapper) {
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
-    fun getDynamic(did: Long): CommonResult<Dynamic> {
+     override fun getDynamic(did: Long): CommonResult<Dynamic> {
         val dynamic: Dynamic? = dynamicMapper.selectById(did)
         return if (dynamic != null) {
             CommonResult.success(dynamic)
@@ -57,7 +57,7 @@ class DynamicService(private val dynamicMapper: DynamicMapper) {
         }
     }
 
-    fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): CommonResult<List<Dynamic>> {
+    override fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): CommonResult<List<Dynamic>> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -72,7 +72,7 @@ class DynamicService(private val dynamicMapper: DynamicMapper) {
         return CommonResult.success(dynamics)
     }
 
-    fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): CommonResult<Dynamic> {
+    override fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): CommonResult<Dynamic> {
         var newDynamic = Dynamic()
         // 是否回复
         newDynamic.replyId = replyId ?: -1L
@@ -94,7 +94,7 @@ class DynamicService(private val dynamicMapper: DynamicMapper) {
         }
     }
 
-    fun deleteDynamic(did: Long): CommonResult<Dynamic> {
+    override fun deleteDynamic(did: Long): CommonResult<Dynamic> {
         val dDynamic: Dynamic? = dynamicMapper.selectById(did)
         return if (dDynamic != null) {
             val result: Int = dynamicMapper.deleteById(did)

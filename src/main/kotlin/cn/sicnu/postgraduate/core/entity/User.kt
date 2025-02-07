@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.obj
+package cn.sicnu.postgraduate.core.entity
 
 import com.baomidou.mybatisplus.annotation.IdType
 import com.baomidou.mybatisplus.annotation.TableField

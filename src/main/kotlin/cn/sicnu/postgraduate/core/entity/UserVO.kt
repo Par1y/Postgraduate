@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate.core.obj
+package cn.sicnu.postgraduate.core.entity
 
 /*
     UserVO，前端返回用

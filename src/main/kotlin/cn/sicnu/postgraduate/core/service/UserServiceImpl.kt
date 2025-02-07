@@ -1,19 +1,19 @@
-package cn.sicnu.Postgraduate.core.service
+package cn.sicnu.postgraduate.core.service
 
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import cn.sicnu.Postgraduate.core.mapper.UserMapper
-import cn.sicnu.Postgraduate.core.obj.User
-import cn.sicnu.Postgraduate.core.obj.UserVO
-import cn.sicnu.Postgraduate.core.obj.CommonResult
+import cn.sicnu.postgraduate.core.mapper.UserMapper
+import cn.sicnu.postgraduate.core.entity.User
+import cn.sicnu.postgraduate.core.entity.UserVO
+import cn.sicnu.postgraduate.core.entity.CommonResult
 
 @Service
-class UserService(private val userMapper: UserMapper) {
+class UserServiceImpl(private val userMapper: UserMapper): UserService {
     companion object {
         //日志模块
-        private val logger: Logger = LoggerFactory.getLogger(UserService::class.java)
+        private val logger: Logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
 
         //常量声明
         private const val CODE_SUCCESS: Int = 0
@@ -27,8 +27,8 @@ class UserService(private val userMapper: UserMapper) {
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
     }
 
-    @Cacheable(value = arrayOf("user"), key = "#uid")
-    fun getUser(uid: Long): CommonResult<UserVO> {
+    @Cacheable(value = ["user"], key = "#uid")
+    override fun getUser(uid: Long): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
             CommonResult.success(createUserVO(user))
@@ -38,8 +38,8 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @Cacheable(value = arrayOf("user"), key = "#uid")
-    fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
+    @Cacheable(value = ["user"], key = "#uid")
+    override fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
             if (user.getPassword() == password) {
@@ -54,8 +54,8 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @CachePut(value = arrayOf("user"), key = "#username")
-    fun newUser(username: String, password: String): CommonResult<UserVO> {
+    @CachePut(value = ["user"], key = "#username")
+    override fun newUser(username: String, password: String): CommonResult<UserVO> {
         val newUser: User = User().apply {
             setUsername(username)
             setPassword(password)
@@ -77,8 +77,8 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @CachePut(value = arrayOf("user"), key = "#uid")
-    fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO> {
+    @CachePut(value = ["user"], key = "#uid")
+    override fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO> {
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
             return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
@@ -107,10 +107,9 @@ class UserService(private val userMapper: UserMapper) {
             CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
         }
     }
-    
 
-    @CacheEvict(value = arrayOf("user"), key = "#uid")
-    fun deleteUser(uid: Long): CommonResult<UserVO> {
+    @CacheEvict(value = ["user"], key = "#uid")
+    override fun deleteUser(uid: Long): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
             val result: Int = userMapper.deleteById(uid)

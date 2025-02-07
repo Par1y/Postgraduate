@@ -1,4 +1,4 @@
-package cn.sicnu.Postgraduate
+package cn.sicnu.postgraduate
 import org.springframework.cache.annotation.*;
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
