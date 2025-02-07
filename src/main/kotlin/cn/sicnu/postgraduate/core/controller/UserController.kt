@@ -45,9 +45,9 @@ class UserController(private val userService: UserServiceImpl) {
         @RequestParam("uid") uid: Long?,
         @RequestParam("username") username: String?,
         @RequestParam("password") password: String
-    ): CommonResult<UserVO> {
+    ): CommonResult<Any> {
         return if (uid != null && username == null) {
-            userService.verifyUser(uid, password)
+            userService.login(uid, password)
         } else if (uid == null && username != null) {
             userService.newUser(username, password)
         } else {

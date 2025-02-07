@@ -1,5 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.jwt.JWTUtil
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service
 import org.slf4j.Logger
@@ -8,14 +9,23 @@ import cn.sicnu.postgraduate.core.mapper.UserMapper
 import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.entity.UserVO
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.springsecurity.entity.LoginUser
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
+import java.util.*
+import kotlin.collections.HashMap
 
 @Service
-class UserServiceImpl(private val userMapper: UserMapper): UserService {
+class UserServiceImpl(private val userMapper: UserMapper,
+    private val authenticationManager: AuthenticationManager
+): UserService {
     companion object {
         //日志模块
         private val logger: Logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
 
         //常量声明
+        private const val JWTKEY: String = "notForProduction"
         private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
         private const val MESSAGE_MISSING: String = "用户不存在"
@@ -39,23 +49,31 @@ class UserServiceImpl(private val userMapper: UserMapper): UserService {
     }
 
     @Cacheable(value = ["user"], key = "#uid")
-    override fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
-        val user: User? = userMapper.selectById(uid)
-        return if (user != null) {
-            if (user.getPassword() == password) {
-                CommonResult.success(createUserVO(user))
-            } else {
-                logger.info("verifyUser: uid {}, {}", uid, MESSAGE_WRONG_PASSWORD)
-                CommonResult.error(CODE_WRONG_PASSWORD, MESSAGE_WRONG_PASSWORD)
-            }
-        } else {
-            logger.info("verifyUser: uid {}, {}", uid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+    override fun login(uid: Long, password: String): CommonResult<Any> {
+        val authenticationToken: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(uid, password)
+        val authenticate: Authentication = authenticationManager.authenticate(authenticationToken)
+        //认证不通过
+        if(Objects.isNull(authenticate)) {
+            return CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
         }
+        //认证通过
+        val principal: LoginUser = authenticate.principal as LoginUser
+        val vo: UserVO = createUserVO(principal.getUser()!!)
+        //构建JWT
+        val jwtMap: Map<String, Long> = HashMap<String, Long>().apply {
+            put("uid", vo.getUid()!!)
+        }
+        val jwt: String = JWTUtil.createToken(jwtMap, JWTKEY.toByteArray())
+        //构建响应体payload
+        val map: Map<String, String> = HashMap<String, String>().apply {
+            put("token",jwt)
+            put("UserVO", vo.toString())
+        }
+        return CommonResult.success(map)
     }
 
     @CachePut(value = ["user"], key = "#username")
-    override fun newUser(username: String, password: String): CommonResult<UserVO> {
+    override fun newUser(username: String, password: String): CommonResult<Any> {
         val newUser: User = User().apply {
             setUsername(username)
             setPassword(password)

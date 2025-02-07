@@ -7,9 +7,9 @@ interface UserService {
 
     fun getUser(uid: Long): CommonResult<UserVO>
 
-    fun verifyUser(uid: Long, password: String): CommonResult<UserVO>
+    fun login(uid: Long, password: String): CommonResult<Any>
 
-    fun newUser(username: String, password: String): CommonResult<UserVO>
+    fun newUser(username: String, password: String): CommonResult<Any>
 
     fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO>
 

@@ -14,7 +14,7 @@ class UserDetailsServiceImpl(private val userMapper: UserMapper): UserDetailsSer
         if (Objects.isNull(user)) {
             throw UsernameNotFoundException("Uid not found")
         }
-        TODO("查询对应权限信息")
+        //TODO 查询对应权限
 
         return LoginUser(user)
     }
