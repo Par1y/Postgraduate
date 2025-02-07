@@ -1,5 +1,5 @@
 package cn.sicnu.Postgraduate
-
+import org.springframework.cache.annotation.*;
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.mybatis.spring.annotation.MapperScan;

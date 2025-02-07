@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     User，后端内部使用
  */
-@TableName("`user`")
+@TableName("`users`")
 data class User (
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private var uid: Long? = null,

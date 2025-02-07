@@ -1,5 +1,6 @@
 package cn.sicnu.Postgraduate.core.service
 
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,7 +27,7 @@ class UserService(private val userMapper: UserMapper) {
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
     }
 
-    @Cacheable(value = "user", key = "#uid")
+    @Cacheable(value = arrayOf("user"), key = "#uid")
     fun getUser(uid: Long): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
@@ -37,7 +38,7 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @Cacheable(value = "user", key = "#uid")
+    @Cacheable(value = arrayOf("user"), key = "#uid")
     fun verifyUser(uid: Long, password: String): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
@@ -53,7 +54,7 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @CachePut(value = "user", key = "#username")
+    @CachePut(value = arrayOf("user"), key = "#username")
     fun newUser(username: String, password: String): CommonResult<UserVO> {
         val newUser: User = User().apply {
             setUsername(username)
@@ -76,7 +77,7 @@ class UserService(private val userMapper: UserMapper) {
         }
     }
 
-    @CachePut(value = "user", key = "#uid")
+    @CachePut(value = arrayOf("user"), key = "#uid")
     fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO> {
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
@@ -108,7 +109,7 @@ class UserService(private val userMapper: UserMapper) {
     }
     
 
-    @CacheEvict(value = "user", key = "#uid")
+    @CacheEvict(value = arrayOf("user"), key = "#uid")
     fun deleteUser(uid: Long): CommonResult<UserVO> {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
