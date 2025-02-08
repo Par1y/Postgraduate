@@ -10,6 +10,9 @@ import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.PlanMapper
 import cn.sicnu.postgraduate.core.entity.Plan
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.CachePut
+import org.springframework.cache.annotation.Cacheable
 
 /*
     计划服务
@@ -47,6 +50,7 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
+    @Cacheable(value = ["plan"], key = "#pid")
     override fun getPlan(pid: Long): CommonResult<Plan> {
         val plan: Plan? = planMapper.selectById(pid)
         return if (plan != null) {
@@ -58,6 +62,7 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         }
     }
 
+    @Cacheable(value = ["plan"], key = "#pid")
     override fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
@@ -97,6 +102,7 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         return CommonResult.success(plans)
     }
 
+    @CachePut(value = ["plan"], key = "#pid")
     override fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
         val newPlan = Plan().apply {
             setUid(uid)
@@ -118,6 +124,7 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         }
     }
 
+    @CachePut(value = ["plan"], key = "#pid")
     override fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
         if (date == null && content == null) {
             logger.info("alterPlan: pid {}, {}", pid, MESSAGE_UNCHANGED)
@@ -150,6 +157,7 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         }
     }
 
+    @CacheEvict(value = ["plan"], key = "#pid")
     override fun deletePlan(pid: Long): CommonResult<Plan> {
         val dPlan: Plan? = planMapper.selectById(pid)
         return if (dPlan != null) {

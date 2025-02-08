@@ -1,17 +1,17 @@
 package cn.sicnu.postgraduate.core.service
 
 import cn.sicnu.postgraduate.core.entity.CommonResult
-import cn.sicnu.postgraduate.core.entity.UserVO
+import cn.sicnu.postgraduate.core.entity.User
 
 interface UserService {
 
-    fun getUser(uid: Long): CommonResult<UserVO>
+    fun getUser(uid: Long): User
 
-    fun login(uid: Long, password: String): CommonResult<Any>
+    fun login(uid: Long, password: String): User
 
-    fun newUser(username: String, password: String): CommonResult<Any>
+    fun newUser(username: String, password: String): User
 
-    fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO>
+    fun alterUser(uid: Long, username: String?, password: String?): User
 
-    fun deleteUser(uid: Long): CommonResult<UserVO>
+    fun deleteUser(uid: Long): User
 }

@@ -1,5 +1,7 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.lang.Snowflake
+import cn.hutool.core.util.IdUtil
 import cn.hutool.jwt.JWTUtil
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service
@@ -9,7 +11,9 @@ import cn.sicnu.postgraduate.core.mapper.UserMapper
 import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.entity.UserVO
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.core.exception.CustomException
 import cn.sicnu.postgraduate.springsecurity.entity.LoginUser
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -25,7 +29,8 @@ class UserServiceImpl(private val userMapper: UserMapper,
         private val logger: Logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
 
         //常量声明
-        private const val JWTKEY: String = "notForProduction"
+        @Value("\${security.jwtKey}")
+        private lateinit  var jwtKey: String
         private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
         private const val MESSAGE_MISSING: String = "用户不存在"
@@ -38,123 +43,106 @@ class UserServiceImpl(private val userMapper: UserMapper,
     }
 
     @Cacheable(value = ["user"], key = "#uid")
-    override fun getUser(uid: Long): CommonResult<UserVO> {
+    override fun getUser(uid: Long): User {
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
-            CommonResult.success(createUserVO(user))
+            user
         } else {
             logger.info("getUser: uid {}, {}", uid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 
     @Cacheable(value = ["user"], key = "#uid")
-    override fun login(uid: Long, password: String): CommonResult<Any> {
+    override fun login(uid: Long, password: String): User {
         val authenticationToken: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(uid, password)
         val authenticate: Authentication = authenticationManager.authenticate(authenticationToken)
         //认证不通过
         if(Objects.isNull(authenticate)) {
-            return CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
         //认证通过
         val principal: LoginUser = authenticate.principal as LoginUser
-        val vo: UserVO = createUserVO(principal.getUser()!!)
-        //构建JWT
-        val jwtMap: Map<String, Long> = HashMap<String, Long>().apply {
-            put("uid", vo.getUid()!!)
-        }
-        val jwt: String = JWTUtil.createToken(jwtMap, JWTKEY.toByteArray())
-        //构建响应体payload
-        val map: Map<String, String> = HashMap<String, String>().apply {
-            put("token",jwt)
-            put("UserVO", vo.toString())
-        }
-        return CommonResult.success(map)
+        val user: User = principal.getUser()!!
+        return user
     }
 
-    @CachePut(value = ["user"], key = "#username")
-    override fun newUser(username: String, password: String): CommonResult<Any> {
+    @CachePut(value = ["user"], key = "#uid")
+    override fun newUser(username: String, password: String): User {
+        val snowFlake:  Snowflake = IdUtil.getSnowflake()
+        val uid: Long = snowFlake.nextId()
         val newUser: User = User().apply {
+            setUid(uid)
             setUsername(username)
             setPassword(password)
         }
         val result: Int = userMapper.insert(newUser)
-        return when (result) {
+        when (result) {
             1 -> {
-                val vo: UserVO = createUserVO(newUser)
-                CommonResult.success(vo)
+                return newUser
             }
             in Int.MIN_VALUE..0 -> {
                 logger.error("newUser: username {}, {} 插入失败", username, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
             else -> {
                 logger.error("newUser: username {}, {} 插入行数大于1", username, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
         }
     }
 
     @CachePut(value = ["user"], key = "#uid")
-    override fun alterUser(uid: Long, username: String?, password: String?): CommonResult<UserVO> {
+    override fun alterUser(uid: Long, username: String?, password: String?): User {
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
-            return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
+            throw CustomException(CODE_UNCHANGED, MESSAGE_UNCHANGED)
         }
         var updateUser: User? = userMapper.selectById(uid)
-        return if (updateUser != null) {
+        if (updateUser != null) {
             username?.let { updateUser.setUsername(it) }
             password?.let { updateUser.setPassword(it) }
             val result: Int = userMapper.updateById(updateUser)
             when (result) {
                 1 -> {
-                    val vo: UserVO = createUserVO(updateUser)
-                    CommonResult.success(vo)
+                    return updateUser
                 }
                 in Int.MIN_VALUE..0 -> {
                     logger.error("alterUser: uid {}, {} 修改失败", uid, MESSAGE_DATABASE_ERROR)
-                    CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                    throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
                 }
                 else -> {
                     logger.error("alterUser: uid {}, {} 修改行数大于1", uid, MESSAGE_DATABASE_ERROR)
-                    CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                    throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
                 }
             }
         } else {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 
     @CacheEvict(value = ["user"], key = "#uid")
-    override fun deleteUser(uid: Long): CommonResult<UserVO> {
+    override fun deleteUser(uid: Long): User {
         val user: User? = userMapper.selectById(uid)
-        return if (user != null) {
+        if (user != null) {
             val result: Int = userMapper.deleteById(uid)
             when (result) {
                 1 -> {
-                    val vo: UserVO = createUserVO(user)
-                    CommonResult.success(vo)
+                    return user
                 }
                 in Int.MIN_VALUE..0 -> {
                     logger.error("deleteUser: uid {}, {} 删除失败", uid, MESSAGE_DATABASE_ERROR)
-                    CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                    throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
                 }
                 else -> {
                     logger.error("deleteUser: uid {}, {} 删除行数大于1", uid, MESSAGE_DATABASE_ERROR)
-                    CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                    throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
                 }
             }
         } else {
             logger.info("deleteUser: uid {}, {}", uid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
-        }
-    }
-
-    private fun createUserVO(user: User): UserVO {
-        return UserVO().apply {
-            setUid(user.getUid()!!)
-            setUsername(user.getUsername()!!)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 }

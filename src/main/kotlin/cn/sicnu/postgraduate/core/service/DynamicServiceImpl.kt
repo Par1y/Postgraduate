@@ -10,6 +10,9 @@ import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.DynamicMapper
 import cn.sicnu.postgraduate.core.entity.Dynamic
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.CachePut
+import org.springframework.cache.annotation.Cacheable
 
 /*
     动态服务
@@ -47,6 +50,7 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
+    @Cacheable(value = ["dynamic"], key = "#did")
      override fun getDynamic(did: Long): CommonResult<Dynamic> {
         val dynamic: Dynamic? = dynamicMapper.selectById(did)
         return if (dynamic != null) {
@@ -57,6 +61,7 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         }
     }
 
+    @Cacheable(value = ["dynamic"], key = "#did")
     override fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): CommonResult<List<Dynamic>> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
@@ -72,6 +77,7 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         return CommonResult.success(dynamics)
     }
 
+    @CachePut(value = ["dynamic"], key = "#did")
     override fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): CommonResult<Dynamic> {
         var newDynamic = Dynamic()
         // 是否回复
@@ -94,6 +100,7 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         }
     }
 
+    @CacheEvict(value = ["dynamic"], key = "#did")
     override fun deleteDynamic(did: Long): CommonResult<Dynamic> {
         val dDynamic: Dynamic? = dynamicMapper.selectById(did)
         return if (dDynamic != null) {
