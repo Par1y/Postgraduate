@@ -10,6 +10,7 @@ import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.PlanMapper
 import cn.sicnu.postgraduate.core.entity.Plan
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.core.exception.CustomException
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
@@ -18,17 +19,17 @@ import org.springframework.cache.annotation.Cacheable
     计划服务
 
     查询计划
-    getPlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
-    getPlanBy: CommonResult<List<Plan>>，成功包装对象，失败空对象&错误信息
+    getPlan: Plan，成功包装对象，失败空对象&错误信息
+    getPlanBy: List<Plan>，成功包装对象，失败空对象&错误信息
 
     新建计划
-    newPlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
+    newPlan: Plan，成功包装对象，失败空对象&错误信息
 
     修改计划
-    alterPlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
+    alterPlan: Plan，成功包装对象，失败空对象&错误信息
 
     删除计划
-    deletePlan: CommonResult<Plan>，成功包装对象，失败空对象&错误信息
+    deletePlan: Plan，成功包装对象，失败空对象&错误信息
  */
 @Service
 class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
@@ -51,19 +52,19 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
     }
 
     @Cacheable(value = ["plan"], key = "#pid")
-    override fun getPlan(pid: Long): CommonResult<Plan> {
+    override fun getPlan(pid: Long): Plan {
         val plan: Plan? = planMapper.selectById(pid)
-        return if (plan != null) {
-            CommonResult.success(plan)
+        if (plan != null) {
+            return plan
         } else {
             // 无此计划
             logger.info("getPlan: pid {}, {}", pid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 
     @Cacheable(value = ["plan"], key = "#pid")
-    override fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): CommonResult<List<Plan>> {
+    override fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): List<Plan> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -94,16 +95,16 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
             else -> {
                 // 无法理解
                 logger.info("getPlanBy: uid {}, {} to {}, {}", uid, beginDate, endDate, MESSAGE_WRONG_TIME)
-                return CommonResult.error(CODE_WRONG_TIME, MESSAGE_WRONG_TIME)
+                throw CustomException(CODE_WRONG_TIME, MESSAGE_WRONG_TIME)
             }
         }
 
         val plans: List<Plan> = planMapper.selectList(queryWrapper)
-        return CommonResult.success(plans)
+        return plans
     }
 
     @CachePut(value = ["plan"], key = "#pid")
-    override fun newPlan(uid: Long, date: LocalDateTime, content: String): CommonResult<Plan> {
+    override fun newPlan(uid: Long, date: LocalDateTime, content: String): Plan {
         val newPlan = Plan().apply {
             setUid(uid)
             setDate(date)
@@ -111,28 +112,28 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         }
 
         val result: Int = planMapper.insert(newPlan)
-        return if (result == 1) {
-            CommonResult.success(newPlan)
+        if (result == 1) {
+            return newPlan
         } else if (result < 1) {
             // 插入失败
             logger.error("newPlan: uid {}, date {}, {} 插入失败", uid, date, MESSAGE_DATABASE_ERROR)
-            CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
         } else {
             // 意外情况
             logger.error("newPlan: uid {}, date {}, {} 插入行数大于1", uid, date, MESSAGE_DATABASE_ERROR)
-            CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
         }
     }
 
     @CachePut(value = ["plan"], key = "#pid")
-    override fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): CommonResult<Plan> {
+    override fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): Plan {
         if (date == null && content == null) {
             logger.info("alterPlan: pid {}, {}", pid, MESSAGE_UNCHANGED)
-            return CommonResult.error(CODE_UNCHANGED, MESSAGE_UNCHANGED)
+            throw CustomException(CODE_UNCHANGED, MESSAGE_UNCHANGED)
         }
 
         val updatePlan: Plan? = planMapper.selectById(pid)
-        return if (updatePlan != null) {
+        if (updatePlan != null) {
             // 比对修改内容
             date?.let { updatePlan.setDate(it) }
             content?.let { updatePlan.setContent(it) }
@@ -140,42 +141,42 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
             // 修改
             val result = planMapper.updateById(updatePlan)
             if (result == 1) {
-                CommonResult.success(updatePlan)
+                return updatePlan
             } else if (result < 1) {
                 // 修改失败
                 logger.error("alterPlan: pid {}, {} 修改失败", pid, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             } else {
                 // 意外情况
                 logger.error("alterPlan: pid {}, {} 修改行数大于1", pid, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
         } else {
             // 无此计划
             logger.info("alterPlan: pid {}, {}", pid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 
     @CacheEvict(value = ["plan"], key = "#pid")
-    override fun deletePlan(pid: Long): CommonResult<Plan> {
+    override fun deletePlan(pid: Long): Plan {
         val dPlan: Plan? = planMapper.selectById(pid)
-        return if (dPlan != null) {
+        if (dPlan != null) {
             val result: Int = planMapper.deleteById(pid)
             if (result == 1) {
-                CommonResult.success(dPlan)
+                return dPlan
             } else if (result < 1) {
                 logger.info("deletePlan: pid {}, {} 删除失败", pid, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             } else {
                 // 意外情况
                 logger.error("deletePlan: pid {}, {} 删除行数大于1", pid, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
         } else {
             // 无此计划
             logger.info("deletePlan: pid {}, {}", pid, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 }

@@ -10,6 +10,8 @@ import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.DynamicMapper
 import cn.sicnu.postgraduate.core.entity.Dynamic
 import cn.sicnu.postgraduate.core.entity.CommonResult
+import cn.sicnu.postgraduate.core.exception.CustomException
+import cn.sicnu.postgraduate.core.service.PlanServiceImpl.Companion
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
@@ -18,17 +20,17 @@ import org.springframework.cache.annotation.Cacheable
     动态服务
 
     查询动态
-    getDynamic: CommonResult<Dynamic>，成功包装对象，失败空对象&错误信息
-    getDynamicBy: CommonResult<List<Dynamic>>，成功包装对象，失败空对象&错误信息
+    getDynamic: Dynamic，成功包装对象，失败空对象&错误信息
+    getDynamicBy: List<Dynamic>，成功包装对象，失败空对象&错误信息
 
     新建动态
-    newDynamic: CommonResult<Dynamic>，成功包装对象，失败空对象&错误信息
+    newDynamic: Dynamic，成功包装对象，失败空对象&错误信息
 
     修改动态
-    alterDynamic: CommonResult<Dynamic>，成功包装对象，失败空对象&错误信息
+    alterDynamic: Dynamic，成功包装对象，失败空对象&错误信息
 
     删除动态
-    deleteDynamic: CommonResult<Dynamic>，成功包装对象，失败空对象&错误信息
+    deleteDynamic: Dynamic，成功包装对象，失败空对象&错误信息
  */
 @Service
 class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicService {
@@ -38,12 +40,9 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         private val logger: Logger = LoggerFactory.getLogger(DynamicServiceImpl::class.java)
 
         // 常量声明
-        private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
         private const val MESSAGE_MISSING: String = "动态不存在"
 
-        private const val CODE_UNCHANGED: Int = -3
-        private const val MESSAGE_UNCHANGED: String = "未改动"
         private const val CODE_DATABASE_ERROR: Int = -4
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
         private const val CODE_WRONG_TIME: Int = -5
@@ -51,18 +50,18 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
     }
 
     @Cacheable(value = ["dynamic"], key = "#did")
-     override fun getDynamic(did: Long): CommonResult<Dynamic> {
+     override fun getDynamic(did: Long): Dynamic {
         val dynamic: Dynamic? = dynamicMapper.selectById(did)
-        return if (dynamic != null) {
-            CommonResult.success(dynamic)
+        if (dynamic != null) {
+            return dynamic
         } else {
             logger.info("getDynamic: did {}, {}", did, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 
     @Cacheable(value = ["dynamic"], key = "#did")
-    override fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): CommonResult<List<Dynamic>> {
+    override fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): List<Dynamic> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -71,14 +70,37 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
 
         // 条件构造器
         val queryWrapper = QueryWrapper<Dynamic>()
-        // TODO: 实现条件获取动态
-
+        if(uid != null) { queryWrapper.eq("uid", uid) }     // 添加 uid 条件
+        if(replyId != null) { queryWrapper.eq("replyId", replyId) }     //添加回复id条件
+        when {
+            beginDate == null && endDate == null -> {
+                // 不指定时间默认当前一周
+                queryWrapper.between("date", startOfWeek, startOfWeek.plusWeeks(1))
+            }
+            beginDate != null && endDate != null && beginDate.isBefore(endDate) -> {
+                // 有指定首尾时间
+                queryWrapper.between("date", beginDate, endDate)
+            }
+            beginDate == null && endDate != null -> {
+                // 省略表示，代表结束时间前一周
+                queryWrapper.between("date", endDate.minusWeeks(1), endDate)
+            }
+            beginDate != null && endDate == null -> {
+                // 省略表示，代表开始时间后一周
+                queryWrapper.between("date", beginDate, beginDate.plusWeeks(1))
+            }
+            else -> {
+                // 无法理解
+                    logger.info("getDynamicBy: uid {}, {} to {}, {}", uid, beginDate, endDate, MESSAGE_WRONG_TIME)
+                    throw CustomException(CODE_WRONG_TIME, MESSAGE_WRONG_TIME)
+            }
+        }
         val dynamics: List<Dynamic> = dynamicMapper.selectList(queryWrapper)
-        return CommonResult.success(dynamics)
+        return dynamics
     }
 
     @CachePut(value = ["dynamic"], key = "#did")
-    override fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): CommonResult<Dynamic> {
+    override fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): Dynamic {
         var newDynamic = Dynamic()
         // 是否回复
         newDynamic.replyId = replyId ?: -1L
@@ -87,38 +109,38 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         newDynamic.content = content
 
         val result: Int = dynamicMapper.insert(newDynamic)
-        return if (result == 1) {
-            CommonResult.success(newDynamic)
+        if (result == 1) {
+            return newDynamic
         } else if (result < 1) {
             // 插入失败
             logger.error("newDynamic: uid {}, date {}, {} 插入失败", uid, date, MESSAGE_DATABASE_ERROR)
-            CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
         } else {
             // 意外情况
             logger.error("newDynamic: uid {}, date {}, {} 插入行数大于1", uid, date, MESSAGE_DATABASE_ERROR)
-            CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+            throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
         }
     }
 
     @CacheEvict(value = ["dynamic"], key = "#did")
-    override fun deleteDynamic(did: Long): CommonResult<Dynamic> {
+    override fun deleteDynamic(did: Long): Dynamic {
         val dDynamic: Dynamic? = dynamicMapper.selectById(did)
-        return if (dDynamic != null) {
+        if (dDynamic != null) {
             val result: Int = dynamicMapper.deleteById(did)
             if (result == 1) {
-                CommonResult.success(dDynamic)
+                return dDynamic
             } else if (result < 1) {
                 logger.info("deleteDynamic: did {}, {} 删除失败", did, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             } else {
                 // 意外情况
                 logger.error("deleteDynamic: did {}, {} 删除行数大于1", did, MESSAGE_DATABASE_ERROR)
-                CommonResult.error(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
+                throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
             }
         } else {
             // 无此动态
             logger.info("deleteDynamic: did {}, {}", did, MESSAGE_MISSING)
-            CommonResult.error(CODE_MISSING, MESSAGE_MISSING)
+            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
     }
 }

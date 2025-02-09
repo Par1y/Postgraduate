@@ -18,9 +18,10 @@ import java.time.LocalDateTime
     GET /{uid} 查询用户
     getUser: CommonResult<UserVO>
     
-    POST / 用户登录\注册
+    POST / 用户登录\注册\登出
     login: CommonResult<UserVO>
     register: CommonResult<UserVO>
+    logout: CommonResult<UserVO>
 
     POST /{uid} 用户修改
     alterUser: CommonResult<UserVO>
@@ -52,12 +53,13 @@ class UserController(private val userService: UserServiceImpl) {
     }
 
     @PostMapping("/")
-    fun loginNRegister(
+    fun loginNRegisterNlogout(
         @RequestParam("uid") uid: Long?,
         @RequestParam("username") username: String?,
         @RequestParam("password") password: String
     ): CommonResult<Any> {
-        return if (uid != null && username == null) {
+        return if (uid != null && username == null && password != null) {
+            /* 登录 */
             val user = userService.login(uid, password)
             val vo: UserVO = createUserVO(user)
 
@@ -78,14 +80,19 @@ class UserController(private val userService: UserServiceImpl) {
             }
             return CommonResult.success(map)
 
-        } else if (uid == null && username != null) {
+        } else if (uid == null && username != null && password != null) {
+            /* 注册 */
             CommonResult.success(
                 createUserVO(
                     userService.newUser(username, password)
                 )
             )
+        }else if(uid != null && username == null && password == null) {
+            /* 登出 */
+            userService.logout(uid)
+            CommonResult.success()
         } else {
-            logger.info("loginNRegister: uid {}, username {}, {}", uid, username, MESSAGE_WRONG_PARAM)
+            logger.info("loginNRegisterNlogout: uid {}, username {}, {}", uid, username, MESSAGE_WRONG_PARAM)
             CommonResult.error(CODE_WRONG_PARAM, MESSAGE_WRONG_PARAM)
         }
     }

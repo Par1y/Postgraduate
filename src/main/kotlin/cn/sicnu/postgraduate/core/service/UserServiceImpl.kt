@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -144,5 +145,15 @@ class UserServiceImpl(private val userMapper: UserMapper,
             logger.info("deleteUser: uid {}, {}", uid, MESSAGE_MISSING)
             throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
+    }
+
+    @CacheEvict(value=["user"], key="#uid")
+    override fun logout(): User {
+        //获取用户信息
+        val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken
+        val loginUser: LoginUser = auth.getPrincipal() as LoginUser
+        val user: User = loginUser.getUser() ?: User()
+        // 注解删除Redis缓存
+        return user
     }
 }

@@ -20,7 +20,13 @@ import org.springframework.util.StringUtils
 import org.springframework.web.filter.OncePerRequestFilter
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
+
+/** JWT过滤器
+ * 每个请求只执行一次
+ * 获取并解析JWT token
+ * Redis缓存获取用户信息
+ * 构造loginUser,封装进入authToken,存入SecurityContextHolder
+ */
 
 @Component
 class JwtAuthenticationTokenFilter(
@@ -68,7 +74,6 @@ class JwtAuthenticationTokenFilter(
         //构造loginUser
         val loginUser: LoginUser = LoginUser(user)
         //权限处理等
-        var principal: Object? = null
         var credentials: Object? = null
         var authToken: UsernamePasswordAuthenticationToken =
             UsernamePasswordAuthenticationToken(loginUser, credentials, null)
