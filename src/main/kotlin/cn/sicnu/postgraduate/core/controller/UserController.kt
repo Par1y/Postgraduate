@@ -1,4 +1,4 @@
-package cn.sicnu.postgraduate.core.controller
+package cn.sicnu.postgraduate.core.controllPlaner
 
 import cn.hutool.jwt.JWTUtil
 import org.slf4j.Logger
@@ -12,7 +12,7 @@ import cn.sicnu.postgraduate.core.entity.UserVO
 import org.springframework.beans.factory.annotation.Value
 import java.time.LocalDateTime
 
-/*
+/**
     /user接口控制器
 
     GET /{uid} 查询用户

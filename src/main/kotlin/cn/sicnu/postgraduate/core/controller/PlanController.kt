@@ -6,11 +6,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
 
 import cn.sicnu.postgraduate.core.service.PlanService
-import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.entity.Plan
 
-/*
-    /plan接口控制器
+/**
+    plan接口控制器
 
     GET /{pid} 查询单计划
     getPlan: Plan
@@ -23,6 +22,9 @@ import cn.sicnu.postgraduate.core.entity.Plan
 
     POST /{pid} 计划修改
     alterPlan: Plan
+
+    DELETE /{pid} 删除计划
+    deletePlan: Plan
  */
 @RestController
 @RequestMapping("/v1/plan")
@@ -39,26 +41,26 @@ class PlanController(private val planService: PlanService) {
 
     @GetMapping("/")
     fun getPlanBy(
-        @RequestParam uid: Long,
-        @RequestParam beginDate: LocalDateTime?,
-        @RequestParam endDate: LocalDateTime?
+        @RequestParam("uid") uid: Long,
+        @RequestParam("beginDate") beginDate: LocalDateTime?,
+        @RequestParam("endDate") endDate: LocalDateTime?
         ): List<Plan> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
 
     @PostMapping("/")
     fun newPlan(
-        @RequestParam uid: Long,
-        @RequestParam date: LocalDateTime,
-        @RequestParam content: String
+        @RequestParam("uid") uid: Long,
+        @RequestParam("date") date: LocalDateTime,
+        @RequestParam("content") content: String
         ): Plan {
         return planService.newPlan(uid, date, content)
     }
 
     @PostMapping("/{pid}")
     fun alterPlan(@PathVariable("pid") pid: Long,
-    @RequestParam date: LocalDateTime?,
-    @RequestParam content: String?
+    @RequestParam("date") date: LocalDateTime?,
+    @RequestParam("content") content: String?
     ): Plan {
         return planService.alterPlan(pid, date, content)
     }
