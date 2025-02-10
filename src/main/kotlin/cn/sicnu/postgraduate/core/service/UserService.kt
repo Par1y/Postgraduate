@@ -34,7 +34,7 @@ interface UserService {
 
     fun alterUser(uid: Long, username: String?, password: String?): User
 
-    fun deleteUser(uid: Long): User
+    fun deleteUser(): User
 
     fun logout(): User
 }

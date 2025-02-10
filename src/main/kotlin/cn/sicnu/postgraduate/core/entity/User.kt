@@ -17,7 +17,10 @@ data class User (
     private var username: String? = null,
 
     @TableField
-    private var password: String? = null
+    private var password: String? = null,
+
+    @TableField
+    private var roles: List<String>? = listOf("ROLE_USER")
 ) {
     //getter & setter
     public fun getUid(): Long? {
@@ -32,6 +35,10 @@ data class User (
         return this.password
     }
 
+    public fun getRoles(): List<String>? {
+        return this.roles
+    }
+
     public fun setUid(uid: Long): Unit {
         this.uid = uid
     }
@@ -42,5 +49,9 @@ data class User (
 
     public fun setPassword(password: String): Unit {
         this.password = password
+    }
+
+    public fun setRoles(roles: List<String>): Unit {
+        this.roles = roles
     }
 }

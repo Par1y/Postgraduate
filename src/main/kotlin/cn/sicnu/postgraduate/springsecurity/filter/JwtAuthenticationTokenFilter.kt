@@ -74,7 +74,7 @@ class JwtAuthenticationTokenFilter(
         //构造loginUser
         val loginUser: LoginUser = LoginUser(user)
         //权限处理等
-        var credentials: Object? = null
+        var credentials: Any? = null
         var authToken: UsernamePasswordAuthenticationToken =
             UsernamePasswordAuthenticationToken(loginUser, credentials, null)
         SecurityContextHolder.getContext().setAuthentication(authToken);

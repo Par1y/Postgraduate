@@ -26,7 +26,7 @@ import java.time.LocalDateTime
     POST /{uid} 用户修改
     alterUser: CommonResult<UserVO>
 
-    DELETE /{uid} 用户删除
+    DELETE / 用户删除
     deleteUser: CommonResult<UserVO>
  */
 @RestController
@@ -56,7 +56,7 @@ class UserController(private val userService: UserServiceImpl) {
     fun loginNRegisterNlogout(
         @RequestParam("uid") uid: Long?,
         @RequestParam("username") username: String?,
-        @RequestParam("password") password: String
+        @RequestParam("password") password: String?
     ): CommonResult<Any> {
         return if (uid != null && username == null && password != null) {
             /* 登录 */
@@ -79,7 +79,6 @@ class UserController(private val userService: UserServiceImpl) {
                 put("UserVO", vo.toString())
             }
             return CommonResult.success(map)
-
         } else if (uid == null && username != null && password != null) {
             /* 注册 */
             CommonResult.success(
@@ -89,8 +88,8 @@ class UserController(private val userService: UserServiceImpl) {
             )
         }else if(uid != null && username == null && password == null) {
             /* 登出 */
-            userService.logout(uid)
-            CommonResult.success()
+            val user: User = userService.logout()
+            CommonResult.success(user)
         } else {
             logger.info("loginNRegisterNlogout: uid {}, username {}, {}", uid, username, MESSAGE_WRONG_PARAM)
             CommonResult.error(CODE_WRONG_PARAM, MESSAGE_WRONG_PARAM)
@@ -110,11 +109,11 @@ class UserController(private val userService: UserServiceImpl) {
         )
     }
 
-    @DeleteMapping("/{uid}")
-    fun deleteUser(@PathVariable("uid") uid: Long): CommonResult<UserVO> {
+    @DeleteMapping("/")
+    fun deleteUser(): CommonResult<UserVO> {
         return CommonResult.success(
             createUserVO(
-                userService.deleteUser(uid)
+                userService.deleteUser()
             )
         )
     }

@@ -2,6 +2,7 @@ package cn.sicnu.postgraduate.springsecurity.entity
 
 import cn.sicnu.postgraduate.core.entity.User
 import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
 public data class  LoginUser(
@@ -11,8 +12,14 @@ public data class  LoginUser(
         this.user = user
     }
 
-    public override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
-        TODO()
+    // 返回用户权限
+    override fun getAuthorities(): MutableList<out GrantedAuthority> {
+        val authorities = mutableListOf<GrantedAuthority>()
+        user?.getRoles()?.forEach { role ->
+            // 将每个角色转换为 SimpleGrantedAuthority
+            authorities.add(SimpleGrantedAuthority(role))
+        }
+        return authorities
     }
 
     public fun getUser(): User? {

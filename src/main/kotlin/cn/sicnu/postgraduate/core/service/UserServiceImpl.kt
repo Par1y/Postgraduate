@@ -124,8 +124,12 @@ class UserServiceImpl(private val userMapper: UserMapper,
     }
 
     @CacheEvict(value = ["user"], key = "#uid")
-    override fun deleteUser(uid: Long): User {
-        val user: User? = userMapper.selectById(uid)
+    override fun deleteUser(): User {
+        //获取用户信息
+        val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken
+        val loginUser: LoginUser = auth.getPrincipal() as LoginUser
+        val user: User? = loginUser.getUser()
+        val uid: Long = user?.getUid() ?: 0
         if (user != null) {
             val result: Int = userMapper.deleteById(uid)
             when (result) {

@@ -13,16 +13,16 @@ import cn.sicnu.postgraduate.core.entity.Plan
     /plan接口控制器
 
     GET /{pid} 查询单计划
-    getPlan: commonResult<Plan>
+    getPlan: Plan
     
     GET / 按条件查询计划
     getPlanBy: commonResult<List<Plan>>
 
     POST / 新建计划
-    newPlan: commonResult<Plan>
+    newPlan: Plan
 
     POST /{pid} 计划修改
-    alterPlan: commonResult<Plan>
+    alterPlan: Plan
  */
 @RestController
 @RequestMapping("/v1/plan")
@@ -33,7 +33,7 @@ class PlanController(private val planService: PlanService) {
     }
 
     @GetMapping("/{pid}")
-    fun getPlan(@PathVariable("pid") pid: Long): CommonResult<Plan> {
+    fun getPlan(@PathVariable("pid") pid: Long): Plan {
         return planService.getPlan(pid)
     }
 
@@ -42,7 +42,7 @@ class PlanController(private val planService: PlanService) {
         @RequestParam uid: Long,
         @RequestParam beginDate: LocalDateTime?,
         @RequestParam endDate: LocalDateTime?
-        ): CommonResult<List<Plan>> {
+        ): List<Plan> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
 
@@ -51,7 +51,7 @@ class PlanController(private val planService: PlanService) {
         @RequestParam uid: Long,
         @RequestParam date: LocalDateTime,
         @RequestParam content: String
-        ): CommonResult<Plan> {
+        ): Plan {
         return planService.newPlan(uid, date, content)
     }
 
@@ -59,12 +59,12 @@ class PlanController(private val planService: PlanService) {
     fun alterPlan(@PathVariable("pid") pid: Long,
     @RequestParam date: LocalDateTime?,
     @RequestParam content: String?
-    ): CommonResult<Plan> {
+    ): Plan {
         return planService.alterPlan(pid, date, content)
     }
 
     @DeleteMapping("/{pid}")
-    fun deletePlan(@PathVariable("pid") pid: Long): CommonResult<Plan> {
+    fun deletePlan(@PathVariable("pid") pid: Long): Plan {
         return planService.deletePlan(pid)
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.boot.runApplication
 import org.mybatis.spring.annotation.MapperScan;
 
 @SpringBootApplication
-@MapperScan("cn.sicnu.Postgraduate.core.mapper")
+@MapperScan("cn.sicnu.postgraduate.core.mapper")
 @EnableCaching
 class PostgraduateApplication
 
