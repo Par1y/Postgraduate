@@ -10,9 +10,11 @@
 
 3. POST / 用户注册 （**`username`** **`password`**）  <br>  CommonResult\<UserVO\>
 
-4. POST /{**`uid`**} 用户修改 （`username` `password`）  <br>  CommonResult\<UserVO\>
+4. POST / 用户登出  (**`uid`**)    <br>  CommonResult\<UserVO\>
 
-5. DELETE /{**`uid`**} 用户删除  <br>  CommonResult\<UserVO\>
+5. POST /{**`uid`**} 用户修改 （`username` `password`）  <br>  CommonResult\<UserVO\>
+
+6. DELETE / 用户删除  <br>  CommonResult\<UserVO\>
 
 ---
 
@@ -26,7 +28,7 @@
 
 4. POST /{**`pid`**} 计划修改 （`date` `content`）  <br>  CommonResult\<Plan\>
 
-5. DELETE /{**`uid`**} 计划删除  <br>  CommonResult\<Plan\>
+5. DELETE /{**`pid`**} 计划删除  <br>  CommonResult\<Plan\>
 
 ---
 
@@ -38,4 +40,4 @@
 
 3. POST / 发送动态 （**`uid`** **`date`** **`content`** `replyId`）
 
-4. DELETE /{**`pid`**} 删除动态 
+4. DELETE /{**`did`**} 删除动态 

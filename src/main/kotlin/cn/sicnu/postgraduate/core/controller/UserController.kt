@@ -9,8 +9,11 @@ import cn.sicnu.postgraduate.core.service.UserServiceImpl
 import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.entity.UserVO
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.EnvironmentAware
+import org.springframework.core.env.Environment
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 /**
     /user接口控制器
@@ -31,16 +34,21 @@ import java.time.LocalDateTime
  */
 @RestController
 @RequestMapping("/v1/user")
-class UserController(private val userService: UserServiceImpl) {
+class UserController(private val userService: UserServiceImpl): EnvironmentAware {
 
     companion object {
         // 日志模块
         private val logger: Logger = LoggerFactory.getLogger(UserController::class.java)
 
-        @Value("\${security.jwtKey}")
-        private lateinit var jwtKey: String
         private const val CODE_WRONG_PARAM: Int = -21
         private const val MESSAGE_WRONG_PARAM: String = "请求参数错误"
+    }
+
+    private lateinit var environment: Environment
+
+    @Autowired
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
     }
 
     @GetMapping("/{uid}")
@@ -64,11 +72,14 @@ class UserController(private val userService: UserServiceImpl) {
             val vo: UserVO = createUserVO(user)
 
             /* 构建JWT */
+            val jwtKey = environment.getProperty("security.jwtKey")
             val jwtMap: Map<String, Any> = HashMap<String, Any>().apply {
                 put("uid", vo.getUid()!!)
-                put("expire_time", LocalDateTime.now().plusWeeks(1))    //过期时间一周
+                val expireTime = LocalDateTime.now().plusWeeks(1)    //过期时间一周
+                val milliseconds = expireTime.atZone(ZoneOffset.UTC).toInstant().toEpochMilli()
+                put("expire_time", milliseconds)
             }
-            val jwt: String = JWTUtil.createToken(jwtMap, jwtKey.toByteArray())
+            val jwt: String = JWTUtil.createToken(jwtMap, jwtKey?.toByteArray())
 
             /* 存入redis
             * 已注解实现 */
@@ -78,7 +89,7 @@ class UserController(private val userService: UserServiceImpl) {
                 put("token",jwt)
                 put("UserVO", vo.toString())
             }
-            return CommonResult.success(map)
+            CommonResult.success(map)
         } else if (uid == null && username != null && password != null) {
             /* 注册 */
             CommonResult.success(

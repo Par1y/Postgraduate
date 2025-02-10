@@ -1,7 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
 import cn.sicnu.postgraduate.core.entity.Plan
-import java.time.LocalDateTime
 
 /*
     计划服务
@@ -22,11 +21,11 @@ import java.time.LocalDateTime
 interface PlanService{
     fun getPlan(pid: Long): Plan
 
-    fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): List<Plan>
+    fun getPlanBy(uid: Long, beginDate: Long?, endDate: Long?): List<Plan>
 
-    fun newPlan(uid: Long, date: LocalDateTime, content: String): Plan
+    fun newPlan(uid: Long, date: Long, content: String): Plan
 
-    fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): Plan
+    fun alterPlan(pid: Long, date: Long?, content: String?): Plan
 
     fun deletePlan(pid: Long): Plan
 }

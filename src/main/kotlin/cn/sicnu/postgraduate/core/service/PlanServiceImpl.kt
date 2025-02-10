@@ -1,19 +1,25 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.date.LocalDateTimeUtil
+import cn.hutool.core.lang.Snowflake
+import cn.hutool.core.util.IdUtil
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDateTime
+import java.time.Instant
+import java.time.ZoneOffset
 import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.PlanMapper
 import cn.sicnu.postgraduate.core.entity.Plan
-import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.exception.CustomException
+import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
+import org.yaml.snakeyaml.events.Event.ID
 
 /*
     计划服务
@@ -32,7 +38,10 @@ import org.springframework.cache.annotation.Cacheable
     deletePlan: Plan，成功包装对象，失败空对象&错误信息
  */
 @Service
-class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
+class PlanServiceImpl(
+    private val planMapper: PlanMapper,
+    private val cacheManager: CacheManager
+): PlanService {
 
     companion object {
         // 日志模块
@@ -64,12 +73,18 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
     }
 
     @Cacheable(value = ["plan"], key = "#pid")
-    override fun getPlanBy(uid: Long, beginDate: LocalDateTime?, endDate: LocalDateTime?): List<Plan> {
+    override fun getPlanBy(uid: Long, lBeginDate: Long?, lEndDate: Long?): List<Plan> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
             .withSecond(0)
             .withNano(0)
+
+        //转换时间
+        var beginDate: LocalDateTime? = null
+        var endDate: LocalDateTime? = null
+        if(lBeginDate != null){ beginDate  = lBeginDate?.let { timestampConvert(it) } }
+        if(lBeginDate != null){ endDate  = lEndDate?.let { timestampConvert(it) } }
 
         // 条件构造器
         val queryWrapper = QueryWrapper<Plan>()
@@ -103,8 +118,13 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
         return plans
     }
 
-    @CachePut(value = ["plan"], key = "#pid")
-    override fun newPlan(uid: Long, date: LocalDateTime, content: String): Plan {
+    @CachePut(value = ["plan"])
+    override fun newPlan(uid: Long, lDate: Long, content: String): Plan {
+        //转换时间
+        var date: LocalDateTime = timestampConvert(lDate)
+
+        val snowFlake: Snowflake = IdUtil.getSnowflake()
+        val pid: Long = snowFlake.nextId()
         val newPlan = Plan().apply {
             setUid(uid)
             setDate(date)
@@ -113,6 +133,9 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
 
         val result: Int = planMapper.insert(newPlan)
         if (result == 1) {
+            val cacheKey = "plan:$pid"
+            val cache = cacheManager.getCache("plan")
+            cache?.put(cacheKey, newPlan)
             return newPlan
         } else if (result < 1) {
             // 插入失败
@@ -126,7 +149,11 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
     }
 
     @CachePut(value = ["plan"], key = "#pid")
-    override fun alterPlan(pid: Long, date: LocalDateTime?, content: String?): Plan {
+    override fun alterPlan(pid: Long, lDate: Long?, content: String?): Plan {
+        //转换时间
+        var date: LocalDateTime? = null
+        if(lDate != null){ date = timestampConvert(lDate) }
+
         if (date == null && content == null) {
             logger.info("alterPlan: pid {}, {}", pid, MESSAGE_UNCHANGED)
             throw CustomException(CODE_UNCHANGED, MESSAGE_UNCHANGED)
@@ -178,5 +205,9 @@ class PlanServiceImpl(private val planMapper: PlanMapper): PlanService {
             logger.info("deletePlan: pid {}, {}", pid, MESSAGE_MISSING)
             throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
+    }
+
+    private fun timestampConvert(lDate: Long): LocalDateTime {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(lDate), ZoneOffset.UTC)
     }
 }

@@ -1,6 +1,5 @@
 package cn.sicnu.postgraduate.core.controller
 
-import java.time.LocalDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
@@ -42,8 +41,8 @@ class PlanController(private val planService: PlanService) {
     @GetMapping("/")
     fun getPlanBy(
         @RequestParam("uid") uid: Long,
-        @RequestParam("beginDate") beginDate: LocalDateTime?,
-        @RequestParam("endDate") endDate: LocalDateTime?
+        @RequestParam("beginDate") beginDate: Long?,
+        @RequestParam("endDate") endDate: Long?
         ): List<Plan> {
         return planService.getPlanBy(uid, beginDate, endDate)
     }
@@ -51,7 +50,7 @@ class PlanController(private val planService: PlanService) {
     @PostMapping("/")
     fun newPlan(
         @RequestParam("uid") uid: Long,
-        @RequestParam("date") date: LocalDateTime,
+        @RequestParam("date") date: Long,
         @RequestParam("content") content: String
         ): Plan {
         return planService.newPlan(uid, date, content)
@@ -59,7 +58,7 @@ class PlanController(private val planService: PlanService) {
 
     @PostMapping("/{pid}")
     fun alterPlan(@PathVariable("pid") pid: Long,
-    @RequestParam("date") date: LocalDateTime?,
+    @RequestParam("date") date: Long?,
     @RequestParam("content") content: String?
     ): Plan {
         return planService.alterPlan(pid, date, content)

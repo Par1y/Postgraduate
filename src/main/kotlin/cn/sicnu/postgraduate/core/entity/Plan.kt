@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     Plan
  */
-@TableName("`plan`")
+@TableName("plan")
 data class Plan (
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private var pid: Long? = null,

@@ -2,7 +2,6 @@ package cn.sicnu.postgraduate.core.service
 
 import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.entity.Dynamic
-import java.time.LocalDateTime
 
 /*
     动态服务
@@ -24,9 +23,9 @@ interface DynamicService {
 
     fun getDynamic(did: Long): Dynamic
 
-    fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): List<Dynamic>
+    fun getDynamicBy(uid: Long?, beginDate: Long?, endDate: Long?, replyId: Long?): List<Dynamic>
 
-    fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): Dynamic
+    fun newDynamic(uid: Long, date: Long, content: String, replyId: Long?): Dynamic
 
     fun deleteDynamic(did: Long): Dynamic
 }

@@ -1,5 +1,8 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.date.LocalDateTimeUtil
+import cn.hutool.core.lang.Snowflake
+import cn.hutool.core.util.IdUtil
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -9,12 +12,13 @@ import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.DynamicMapper
 import cn.sicnu.postgraduate.core.entity.Dynamic
-import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.exception.CustomException
-import cn.sicnu.postgraduate.core.service.PlanServiceImpl.Companion
+import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
+import java.time.Instant
+import java.time.ZoneOffset
 
 /*
     动态服务
@@ -33,7 +37,10 @@ import org.springframework.cache.annotation.Cacheable
     deleteDynamic: Dynamic，成功包装对象，失败空对象&错误信息
  */
 @Service
-class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicService {
+class DynamicServiceImpl(
+    private val dynamicMapper: DynamicMapper,
+    private val cacheManager: CacheManager
+): DynamicService {
 
     companion object {
         // 日志模块
@@ -61,12 +68,18 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
     }
 
     @Cacheable(value = ["dynamic"], key = "#did")
-    override fun getDynamicBy(uid: Long?, beginDate: LocalDateTime?, endDate: LocalDateTime?, replyId: Long?): List<Dynamic> {
+    override fun getDynamicBy(uid: Long?, lBeginDate: Long?, lEndDate: Long?, replyId: Long?): List<Dynamic> {
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
             .withSecond(0)
             .withNano(0)
+
+        //转换时间
+        var beginDate: LocalDateTime? = null
+        var endDate: LocalDateTime? = null
+        if(lBeginDate != null){ beginDate  = lBeginDate?.let { timestampConvert(it) } }
+        if(lBeginDate != null){ endDate  = lEndDate?.let { timestampConvert(it) } }
 
         // 条件构造器
         val queryWrapper = QueryWrapper<Dynamic>()
@@ -99,17 +112,21 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
         return dynamics
     }
 
-    @CachePut(value = ["dynamic"], key = "#did")
-    override fun newDynamic(uid: Long, date: LocalDateTime, content: String, replyId: Long?): Dynamic {
-        var newDynamic = Dynamic()
-        // 是否回复
-        newDynamic.replyId = replyId ?: -1L
-        newDynamic.uid = uid
-        newDynamic.date = date
-        newDynamic.content = content
+    @CachePut(value = ["dynamic"])
+    override fun newDynamic(uid: Long, lDate: Long, content: String, replyId: Long?): Dynamic {
+        //转换时间
+        var date: LocalDateTime = timestampConvert(lDate)
+
+        val snowFlake: Snowflake = IdUtil.getSnowflake()
+        val did: Long = snowFlake.nextId()
+        val newDynamic: Dynamic = Dynamic(did, uid, date, content)
+        if(replyId != null) newDynamic.replyId = replyId    //有回复
 
         val result: Int = dynamicMapper.insert(newDynamic)
         if (result == 1) {
+            val cacheKey = "dynamic:$did"
+            val cache = cacheManager.getCache("dynamic")
+            cache?.put(cacheKey, newDynamic)
             return newDynamic
         } else if (result < 1) {
             // 插入失败
@@ -142,5 +159,9 @@ class DynamicServiceImpl(private val dynamicMapper: DynamicMapper): DynamicServi
             logger.info("deleteDynamic: did {}, {}", did, MESSAGE_MISSING)
             throw CustomException(CODE_MISSING, MESSAGE_MISSING)
         }
+    }
+
+    private fun timestampConvert(lDate: Long): LocalDateTime {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(lDate), ZoneOffset.UTC)
     }
 }

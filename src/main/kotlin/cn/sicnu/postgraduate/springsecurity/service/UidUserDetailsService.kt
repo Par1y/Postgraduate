@@ -1,6 +1,5 @@
 package cn.sicnu.postgraduate.springsecurity.service
 
-import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.mapper.UserMapper
 import cn.sicnu.postgraduate.springsecurity.entity.LoginUser
 import org.springframework.security.core.userdetails.UserDetails

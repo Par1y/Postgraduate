@@ -1,5 +1,8 @@
 package cn.sicnu.postgraduate.springsecurity.filter
 
+import cn.hutool.core.convert.NumberWithFormat
+import cn.hutool.core.date.LocalDateTimeUtil
+import cn.hutool.jwt.JWT
 import cn.hutool.jwt.JWTException
 import cn.hutool.jwt.JWTUtil
 import cn.sicnu.postgraduate.core.entity.User
@@ -10,9 +13,11 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
+import org.springframework.context.EnvironmentAware
+import org.springframework.core.env.Environment
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
@@ -31,32 +36,46 @@ import java.util.*
 @Component
 class JwtAuthenticationTokenFilter(
     private val cacheManager: CacheManager
-): OncePerRequestFilter() {
+): OncePerRequestFilter(), EnvironmentAware {
     companion object {
         //logger
         private val logger: Logger = LoggerFactory.getLogger("JwtAuthentication::class.java")
-        @Value("\${security.jwtKey}")
-        private lateinit var jwtKey: String
     }
+
+    private lateinit var environment: Environment
+
+    @Autowired
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
+    }
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
         /* token获取解析 */
+        val jwtKey = environment.getProperty("security.jwtKey")
         var uid: Long = 0L
-        lateinit var expireTime: LocalDateTime
+        var expireTime: LocalDateTime = LocalDateTime.now().plusDays(1)
         val token = request.getHeader("token")
         if(!StringUtils.hasText(token)) {
             //没有token
             filterChain.doFilter(request, response)
             return
         }
-        if(!JWTUtil.verify(token, jwtKey.toByteArray())) throw JWTException("非法JWT")
+        if(!JWTUtil.verify(token, jwtKey?.toByteArray())) throw JWTException("非法JWT")
         try {
-            val tokenPayload = JWTUtil.parseToken(token)
-            val uid = tokenPayload.getPayload("uid") as Long
-            val expireTime = tokenPayload.getPayload("expire_time") as LocalDateTime
+            val tokenPayload: JWT = JWTUtil.parseToken(token)
+            uid = tokenPayload.let{
+                val tmp: NumberWithFormat = it.getPayload("uid") as NumberWithFormat
+                tmp.toLong()
+            }
+            expireTime = tokenPayload.let {
+                val tmp: NumberWithFormat = it.getPayload("expire_time") as NumberWithFormat
+                val result = LocalDateTimeUtil.ofUTC(tmp.toLong())
+                result
+            }
         }catch(e: Exception) {
             logger.error(e)
             throw JWTException("JWT内容错误")
@@ -77,7 +96,7 @@ class JwtAuthenticationTokenFilter(
         var credentials: Any? = null
         var authToken: UsernamePasswordAuthenticationToken =
             UsernamePasswordAuthenticationToken(loginUser, credentials, null)
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+        SecurityContextHolder.getContext().setAuthentication(authToken)
 
         filterChain.doFilter(request, response)
     }

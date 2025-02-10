@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableName
 /*
     Dynamic
  */
-@TableName("`dynamic`")
+@TableName("dynamic")
 data class Dynamic(
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     var did: Long? = null,
@@ -25,4 +25,46 @@ data class Dynamic(
 
     @TableField
     var replyId: Long? = null
-) 
+)
+//{
+//    /* getter&setter */
+//    public fun getDid(): Long? {
+//        return did
+//    }
+//
+//    public fun getUid(): Long? {
+//        return uid
+//    }
+//
+//    public fun getDate(): LocalDateTime? {
+//        return date
+//    }
+//
+//    public fun getContent(): String? {
+//        return content
+//    }
+//
+//    public fun getReplyId(): Long? {
+//        return replyId
+//    }
+//
+//    public fun setDid(did: Long) {
+//        this.did  = did
+//    }
+//
+//    public fun setUid(uid: Long) {
+//        this.uid = uid
+//    }
+//
+//    public fun setDate(date: LocalDateTime) {
+//        this.date = date
+//    }
+//
+//    public fun setContent(content: String) {
+//        this.content = content
+//    }
+//
+//    public fun setReplyId(replyId: Long) {
+//        this.replyId = replyId
+//    }
+//}

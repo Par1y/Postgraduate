@@ -2,36 +2,37 @@ package cn.sicnu.postgraduate.core.service
 
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
-import cn.hutool.jwt.JWTUtil
 import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import cn.sicnu.postgraduate.core.mapper.UserMapper
 import cn.sicnu.postgraduate.core.entity.User
-import cn.sicnu.postgraduate.core.entity.UserVO
-import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.exception.CustomException
 import cn.sicnu.postgraduate.springsecurity.entity.LoginUser
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
+import org.springframework.context.EnvironmentAware
+import org.springframework.core.env.Environment
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
-import kotlin.collections.HashMap
 
 @Service
-class UserServiceImpl(private val userMapper: UserMapper,
-    private val authenticationManager: AuthenticationManager
-): UserService {
+class UserServiceImpl(
+    private val userMapper: UserMapper,
+    private val authenticationManager: AuthenticationManager,
+    private val cacheManager: CacheManager,
+    private val bCryptPasswordEncoder: BCryptPasswordEncoder
+): UserService, EnvironmentAware {
     companion object {
         //日志模块
         private val logger: Logger = LoggerFactory.getLogger(UserServiceImpl::class.java)
 
         //常量声明
-        @Value("\${security.jwtKey}")
-        private lateinit  var jwtKey: String
         private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
         private const val MESSAGE_MISSING: String = "用户不存在"
@@ -41,6 +42,13 @@ class UserServiceImpl(private val userMapper: UserMapper,
         private const val MESSAGE_UNCHANGED: String = "未改动"
         private const val CODE_DATABASE_ERROR: Int = -4
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
+    }
+
+    private lateinit var environment: Environment
+
+    @Autowired
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
     }
 
     @Cacheable(value = ["user"], key = "#uid")
@@ -56,6 +64,7 @@ class UserServiceImpl(private val userMapper: UserMapper,
 
     @Cacheable(value = ["user"], key = "#uid")
     override fun login(uid: Long, password: String): User {
+        password.let { encrypt(password) }
         val authenticationToken: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(uid, password)
         val authenticate: Authentication = authenticationManager.authenticate(authenticationToken)
         //认证不通过
@@ -68,18 +77,24 @@ class UserServiceImpl(private val userMapper: UserMapper,
         return user
     }
 
-    @CachePut(value = ["user"], key = "#uid")
+    @CachePut(value = ["user"])
     override fun newUser(username: String, password: String): User {
+        val defaultRoleStr = environment.getProperty("security.defaultRole")
+        val defaultRole = defaultRoleStr?.split(",")
         val snowFlake:  Snowflake = IdUtil.getSnowflake()
         val uid: Long = snowFlake.nextId()
         val newUser: User = User().apply {
             setUid(uid)
             setUsername(username)
-            setPassword(password)
+            setPassword(encrypt(password))
+            defaultRole?.let { setRoles(it) }
         }
         val result: Int = userMapper.insert(newUser)
         when (result) {
             1 -> {
+                val cacheKey = "user:$uid"
+                val cache = cacheManager.getCache("user")
+                cache?.put(cacheKey, newUser)
                 return newUser
             }
             in Int.MIN_VALUE..0 -> {
@@ -101,8 +116,14 @@ class UserServiceImpl(private val userMapper: UserMapper,
         }
         var updateUser: User? = userMapper.selectById(uid)
         if (updateUser != null) {
-            username?.let { updateUser.setUsername(it) }
-            password?.let { updateUser.setPassword(it) }
+            username?.let {
+                updateUser.setUsername(it)
+                it
+            }
+            password?.let {
+                updateUser.setPassword(encrypt(it))
+                it
+            }
             val result: Int = userMapper.updateById(updateUser)
             when (result) {
                 1 -> {
@@ -159,5 +180,9 @@ class UserServiceImpl(private val userMapper: UserMapper,
         val user: User = loginUser.getUser() ?: User()
         // 注解删除Redis缓存
         return user
+    }
+
+    private fun encrypt(password: String): String {
+        return bCryptPasswordEncoder.encode(password)
     }
 }

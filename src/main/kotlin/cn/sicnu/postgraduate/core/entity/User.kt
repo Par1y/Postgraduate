@@ -4,12 +4,13 @@ import com.baomidou.mybatisplus.annotation.IdType
 import com.baomidou.mybatisplus.annotation.TableField
 import com.baomidou.mybatisplus.annotation.TableId
 import com.baomidou.mybatisplus.annotation.TableName
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler
 
 /*
     User，后端内部使用
  */
-@TableName("`users`")
-data class User (
+@TableName("users")
+data class User(
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private var uid: Long? = null,
 
@@ -19,7 +20,7 @@ data class User (
     @TableField
     private var password: String? = null,
 
-    @TableField
+    @TableField(typeHandler = JacksonTypeHandler::class)
     private var roles: List<String>? = listOf("ROLE_USER")
 ) {
     //getter & setter

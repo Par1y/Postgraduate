@@ -38,8 +38,8 @@ class DynamicController {
         @GetMapping("/")
         fun getDynamicBy(
             @RequestParam("uid") uid: Long?,
-            @RequestParam("beginDate") beginDate: LocalDateTime?,
-            @RequestParam("endDate") endDate: LocalDateTime?,
+            @RequestParam("beginDate") beginDate: Long?,
+            @RequestParam("endDate") endDate: Long?,
             @RequestParam("replyId") replyId: Long?
             ): List<Dynamic> {
             return dynamicService.getDynamicBy(uid, beginDate, endDate, replyId)
@@ -48,7 +48,7 @@ class DynamicController {
         @PostMapping("/")
         fun newDynamic(
             @RequestParam("uid") uid: Long,
-            @RequestParam("date") date: LocalDateTime,
+            @RequestParam("date") date: Long,
             @RequestParam("content") content: String,
             @RequestParam("replyId") replyId: Long?
         ): Dynamic {
