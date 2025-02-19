@@ -2,7 +2,7 @@ CREATE TABLE users (
     id BIGINT PRIMARY KEY NOT NULL,
     username TEXT NOT NULL DEFAULT '',
     password TEXT NOT NULL DEFAULT '',
-    roles JSON NOT NULL DEFAULT 'ROLE_USER'
+    roles JSON NOT NULL DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE plan (

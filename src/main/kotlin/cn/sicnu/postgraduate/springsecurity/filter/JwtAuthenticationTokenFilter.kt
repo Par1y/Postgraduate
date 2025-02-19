@@ -19,6 +19,7 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
@@ -93,9 +94,10 @@ class JwtAuthenticationTokenFilter(
         //构造loginUser
         val loginUser: LoginUser = LoginUser(user)
         //权限处理等
-        var credentials: Any? = null
+        var credentials: String? = loginUser.getPassword()
+        var authorities: MutableList<out GrantedAuthority> = loginUser.getAuthorities()
         var authToken: UsernamePasswordAuthenticationToken =
-            UsernamePasswordAuthenticationToken(loginUser, credentials, null)
+            UsernamePasswordAuthenticationToken(loginUser, credentials, authorities)
         SecurityContextHolder.getContext().setAuthentication(authToken)
 
         filterChain.doFilter(request, response)
