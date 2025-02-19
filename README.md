@@ -1,6 +1,7 @@
 # 规划你如何逃离大学的系统后端
 
 ## RestfulAPI
+[本地部署后文档地址](http://localhost:3000/swagger-ui/index.html)
 
 ### /v1/user
 
