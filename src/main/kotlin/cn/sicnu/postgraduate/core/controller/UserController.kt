@@ -9,6 +9,8 @@ import cn.sicnu.postgraduate.core.service.UserServiceImpl
 import cn.sicnu.postgraduate.core.entity.CommonResult
 import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.entity.UserVO
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -34,6 +36,7 @@ import java.time.ZoneOffset
  */
 @RestController
 @RequestMapping("/v1/user")
+@Tag(name = "用户接口", description = "")
 class UserController(private val userService: UserServiceImpl): EnvironmentAware {
 
     companion object {
@@ -52,6 +55,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
     }
 
     @GetMapping("/{uid}")
+    @Operation(summary="查询用户", description = "路径传入uid")
     fun getUser(@PathVariable("uid") uid: Long): CommonResult<UserVO> {
         return CommonResult.success(
             createUserVO(
@@ -61,6 +65,9 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
     }
 
     @PostMapping("/")
+    @Operation(summary="复合，注册/登录/登出用户", description = "uid+password登录  \n" +
+            "username+password注册  \n" +
+            "仅uid登出")
     fun loginNRegisterNlogout(
         @RequestParam("uid") uid: Long?,
         @RequestParam("username") username: String?,
@@ -108,6 +115,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
     }
 
     @PostMapping("/{uid}")
+    @Operation(summary="修改用户", description = "路径传入uid，参数传入欲修改username或password")
     fun alterUser(
         @PathVariable("uid") uid: Long,
         @RequestParam("username") username: String?,
@@ -121,6 +129,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
     }
 
     @DeleteMapping("/")
+    @Operation(summary="删除用户", description = "无需传参，根据登录状态解析用户")
     fun deleteUser(): CommonResult<UserVO> {
         return CommonResult.success(
             createUserVO(

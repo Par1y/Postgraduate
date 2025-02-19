@@ -1,5 +1,6 @@
 package cn.sicnu.postgraduate.core.controller
 
+import cn.sicnu.postgraduate.core.entity.CommonResult
 import java.time.LocalDateTime
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -7,6 +8,8 @@ import org.springframework.web.bind.annotation.*
 
 import cn.sicnu.postgraduate.core.service.DynamicService
 import cn.sicnu.postgraduate.core.entity.Dynamic
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 
 /** /dynamic接口控制器
  * GET /{did} 查询单动态
@@ -24,6 +27,7 @@ import cn.sicnu.postgraduate.core.entity.Dynamic
 class DynamicController {
     @RestController
     @RequestMapping("/v1/dynamic")
+    @Tag(name = "动态接口", description = "")
     class DynamicController(private val dynamicService: DynamicService) {
         companion object {
             //日志模块
@@ -31,33 +35,37 @@ class DynamicController {
         }
 
         @GetMapping("/{did}")
-        fun getPlan(@PathVariable("did") did: Long): Dynamic {
-            return dynamicService.getDynamic(did)
+        @Operation(summary="查询计划", description = "路径传入did")
+        fun getPlan(@PathVariable("did") did: Long): CommonResult<Dynamic> {
+            return CommonResult.success(dynamicService.getDynamic(did))
         }
 
         @GetMapping("/")
+        @Operation(summary="批量查询计划", description = "")
         fun getDynamicBy(
             @RequestParam("uid") uid: Long?,
             @RequestParam("beginDate") beginDate: Long?,
             @RequestParam("endDate") endDate: Long?,
             @RequestParam("replyId") replyId: Long?
-            ): List<Dynamic> {
-            return dynamicService.getDynamicBy(uid, beginDate, endDate, replyId)
+            ): CommonResult<List<Dynamic>> {
+            return CommonResult.success(dynamicService.getDynamicBy(uid, beginDate, endDate, replyId))
         }
 
         @PostMapping("/")
+        @Operation(summary="新建计划", description = "")
         fun newDynamic(
             @RequestParam("uid") uid: Long,
             @RequestParam("date") date: Long,
             @RequestParam("content") content: String,
             @RequestParam("replyId") replyId: Long?
-        ): Dynamic {
-            return dynamicService.newDynamic(uid, date, content, replyId)
+        ): CommonResult<Dynamic> {
+            return CommonResult.success(dynamicService.newDynamic(uid, date, content, replyId))
         }
 
         @DeleteMapping("/{did}")
-        fun deleteDynamic(@PathVariable("did") did: Long): Dynamic {
-            return dynamicService.deleteDynamic(did)
+        @Operation(summary="删除计划", description = "路径传入did")
+        fun deleteDynamic(@PathVariable("did") did: Long): CommonResult<Dynamic> {
+            return CommonResult.success(dynamicService.deleteDynamic(did))
         }
     }
 }

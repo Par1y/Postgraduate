@@ -1,12 +1,14 @@
 package cn.sicnu.postgraduate.core.entity
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.media.Schema
 import java.io.Serializable
 
 /*
     统一结果返回类
     **工具类**
  */
+@Schema(description = "通用结果返回类", hidden = true)
 class CommonResult<T> : Serializable {
     companion object {
         private val CODE_SUCCESS: Int = 0
