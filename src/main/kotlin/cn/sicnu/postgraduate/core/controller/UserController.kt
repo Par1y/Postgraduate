@@ -56,7 +56,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
 
     @GetMapping("/{uid}")
     @Operation(summary="查询用户", description = "路径传入uid")
-    fun getUser(@PathVariable("uid") uid: Long): CommonResult<UserVO> {
+    fun getUser(@PathVariable("uid") uid: String): CommonResult<UserVO> {
         return CommonResult.success(
             createUserVO(
                 userService.getUser(uid)
@@ -69,7 +69,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
             "username+password注册  \n" +
             "仅uid登出")
     fun loginNRegisterNlogout(
-        @RequestParam("uid") uid: Long?,
+        @RequestParam("uid") uid: String?,
         @RequestParam("username") username: String?,
         @RequestParam("password") password: String?
     ): CommonResult<Any> {
@@ -117,7 +117,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
     @PostMapping("/{uid}")
     @Operation(summary="修改用户", description = "路径传入uid，参数传入欲修改username或password")
     fun alterUser(
-        @PathVariable("uid") uid: Long,
+        @PathVariable("uid") uid: String,
         @RequestParam("username") username: String?,
         @RequestParam("password") password: String?
     ): CommonResult<UserVO> {
@@ -140,7 +140,7 @@ class UserController(private val userService: UserServiceImpl): EnvironmentAware
 
     private fun createUserVO(user: User): UserVO {
         return UserVO().apply {
-            setUid(user.getUid()!!)
+            setUid(user.getUid().toString()!!)
             setUsername(user.getUsername()!!)
         }
     }

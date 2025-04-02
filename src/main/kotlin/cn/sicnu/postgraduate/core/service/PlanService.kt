@@ -19,13 +19,13 @@ import cn.sicnu.postgraduate.core.entity.Plan
     deletePlan: Plan，成功包装对象，失败空对象&错误信息
  */
 interface PlanService{
-    fun getPlan(pid: Long): Plan
+    fun getPlan(pid: String): Plan
 
-    fun getPlanBy(uid: Long, beginDate: Long?, endDate: Long?): List<Plan>
+    fun getPlanBy(uid: String, beginDate: String?, endDate: String?): List<Plan>
 
-    fun newPlan(uid: Long, date: Long, content: String): Plan
+    fun newPlan(uid: String, date: String, content: String): Plan
 
-    fun alterPlan(pid: Long, date: Long?, content: String?): Plan
+    fun alterPlan(pid: String, date: String?, content: String?): Plan
 
-    fun deletePlan(pid: Long): Plan
+    fun deletePlan(pid: String): Plan
 }

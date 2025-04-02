@@ -26,13 +26,13 @@ import cn.sicnu.postgraduate.core.entity.User
  */
 interface UserService {
 
-    fun getUser(uid: Long): User
+    fun getUser(uid: String): User
 
-    fun login(uid: Long, password: String): User
+    fun login(uid: String, password: String): User
 
     fun newUser(username: String, password: String): User
 
-    fun alterUser(uid: Long, username: String?, password: String?): User
+    fun alterUser(uid: String, username: String?, password: String?): User
 
     fun deleteUser(): User
 

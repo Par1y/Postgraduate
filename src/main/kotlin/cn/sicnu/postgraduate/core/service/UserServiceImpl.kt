@@ -1,5 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.convert.Convert
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
 import org.springframework.cache.annotation.*;
@@ -52,7 +53,8 @@ class UserServiceImpl(
     }
 
     @Cacheable(value = ["user"], key = "#uid")
-    override fun getUser(uid: Long): User {
+    override fun getUser(uidStr: String): User {
+        val uid: Long = Convert.toLong(uidStr)
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
             user
@@ -63,7 +65,8 @@ class UserServiceImpl(
     }
 
     @Cacheable(value = ["user"], key = "#uid")
-    override fun login(uid: Long, password: String): User {
+    override fun login(uidStr: String, password: String): User {
+        val uid: Long = Convert.toLong(uidStr)
         password.let { encrypt(password) }
         val authenticationToken: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(uid, password)
         val authenticate: Authentication = authenticationManager.authenticate(authenticationToken)
@@ -109,7 +112,8 @@ class UserServiceImpl(
     }
 
     @CachePut(value = ["user"], key = "#uid")
-    override fun alterUser(uid: Long, username: String?, password: String?): User {
+    override fun alterUser(uidStr: String, username: String?, password: String?): User {
+        val uid: Long = Convert.toLong(uidStr)
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
             throw CustomException(CODE_UNCHANGED, MESSAGE_UNCHANGED)

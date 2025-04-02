@@ -19,13 +19,17 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-web") {
+		exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
+	}
+	implementation("org.springframework.boot:spring-boot-starter-undertow")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib")
 	implementation("org.springframework.boot:spring-boot-starter-logging")
 	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation ("org.springframework.boot:spring-boot-starter-validation")
 	implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.9")
 	implementation("com.baomidou:mybatis-plus-boot-starter-test:3.5.10.1")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")

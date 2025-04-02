@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField
 import com.baomidou.mybatisplus.annotation.TableId
 import com.baomidou.mybatisplus.annotation.TableName
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler
+import java.io.Serializable
 
 /*
     User，后端内部使用
@@ -22,7 +23,8 @@ data class User(
 
     @TableField(typeHandler = JacksonTypeHandler::class)
     private var roles: List<String>? = listOf("ROLE_USER")
-) {
+): Serializable
+{
     //getter & setter
     public fun getUid(): Long? {
         return this.uid

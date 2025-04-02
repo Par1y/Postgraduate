@@ -1,5 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.convert.Convert
 import cn.hutool.core.date.LocalDateTimeUtil
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
@@ -57,18 +58,25 @@ class DynamicServiceImpl(
     }
 
     @Cacheable(value = ["dynamic"], key = "#did")
-     override fun getDynamic(did: Long): Dynamic {
-        val dynamic: Dynamic? = dynamicMapper.selectById(did)
-        if (dynamic != null) {
-            return dynamic
-        } else {
-            logger.info("getDynamic: did {}, {}", did, MESSAGE_MISSING)
-            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
-        }
-    }
+     override fun getDynamic(didStr: String): Dynamic {
+         val did: Long = Convert.toLong(didStr)
+
+         val dynamic: Dynamic? = dynamicMapper.selectById(did)
+         if (dynamic != null) {
+             return dynamic
+         } else {
+             logger.info("getDynamic: did {}, {}", did, MESSAGE_MISSING)
+             throw CustomException(CODE_MISSING, MESSAGE_MISSING)
+         }
+     }
 
     @Cacheable(value = ["dynamic"], key = "#did")
-    override fun getDynamicBy(uid: Long?, lBeginDate: Long?, lEndDate: Long?, replyId: Long?): List<Dynamic> {
+    override fun getDynamicBy(uidStr: String?, lBeginDateStr: String?, lEndDateStr: String?, replyIdStr: String?): List<Dynamic> {
+        val uid: Long = Convert.toLong(uidStr)
+        val lBeginDate: Long = Convert.toLong(lBeginDateStr)
+        val lEndDate: Long = Convert.toLong(lEndDateStr)
+        val replyId: Long = Convert.toLong(replyIdStr)
+
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -113,7 +121,11 @@ class DynamicServiceImpl(
     }
 
     @CachePut(value = ["dynamic"])
-    override fun newDynamic(uid: Long, lDate: Long, content: String, replyId: Long?): Dynamic {
+    override fun newDynamic(uidStr: String, lDateStr: String, content: String, replyIdStr: String?): Dynamic {
+        val uid: Long = Convert.toLong(uidStr)
+        val lDate: Long = Convert.toLong(lDateStr)
+        val replyId: Long = Convert.toLong(replyIdStr)
+
         //转换时间
         var date: LocalDateTime = timestampConvert(lDate)
 
@@ -140,7 +152,9 @@ class DynamicServiceImpl(
     }
 
     @CacheEvict(value = ["dynamic"], key = "#did")
-    override fun deleteDynamic(did: Long): Dynamic {
+    override fun deleteDynamic(didStr: String): Dynamic {
+        val did: Long = Convert.toLong(didStr)
+
         val dDynamic: Dynamic? = dynamicMapper.selectById(did)
         if (dDynamic != null) {
             val result: Int = dynamicMapper.deleteById(did)

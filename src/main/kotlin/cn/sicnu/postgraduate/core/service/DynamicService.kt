@@ -21,11 +21,11 @@ import cn.sicnu.postgraduate.core.entity.Dynamic
  */
 interface DynamicService {
 
-    fun getDynamic(did: Long): Dynamic
+    fun getDynamic(did: String): Dynamic
 
-    fun getDynamicBy(uid: Long?, beginDate: Long?, endDate: Long?, replyId: Long?): List<Dynamic>
+    fun getDynamicBy(uid: String?, beginDate: String?, endDate: String?, replyId: String?): List<Dynamic>
 
-    fun newDynamic(uid: Long, date: Long, content: String, replyId: Long?): Dynamic
+    fun newDynamic(uid: String, date: String, content: String, replyId: String?): Dynamic
 
-    fun deleteDynamic(did: Long): Dynamic
+    fun deleteDynamic(did: String): Dynamic
 }

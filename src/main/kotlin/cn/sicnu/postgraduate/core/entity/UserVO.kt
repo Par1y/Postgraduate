@@ -11,12 +11,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 data class UserVO(
     @JsonSerialize(using = ToStringSerializer::class)
     @Schema(description = "用户id", name = "uid", maxLength = 64, minLength = 64)
-    private var uid: Long? = null,
+    private var uid: String? = null,
     @Schema(description = "用户名", name = "username", maxLength = 64)
     private var username: String? = null
 ) {
     //getter & setter
-    public fun getUid(): Long? {
+    public fun getUid(): String? {
         return uid
     }
     
@@ -24,7 +24,7 @@ data class UserVO(
         return username
     }
 
-    public fun setUid(uid: Long): Unit {
+    public fun setUid(uid: String): Unit {
         this.uid = uid
     }
 

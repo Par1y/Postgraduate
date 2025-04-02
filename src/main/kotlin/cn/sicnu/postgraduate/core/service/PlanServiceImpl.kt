@@ -1,5 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
+import cn.hutool.core.convert.Convert
 import cn.hutool.core.date.LocalDateTimeUtil
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
@@ -61,7 +62,9 @@ class PlanServiceImpl(
     }
 
     @Cacheable(value = ["plan"], key = "#pid")
-    override fun getPlan(pid: Long): Plan {
+    override fun getPlan(pidStr: String): Plan {
+        val pid: Long = Convert.toLong(pidStr)
+
         val plan: Plan? = planMapper.selectById(pid)
         if (plan != null) {
             return plan
@@ -73,7 +76,11 @@ class PlanServiceImpl(
     }
 
     @Cacheable(value = ["plan"], key = "#pid")
-    override fun getPlanBy(uid: Long, lBeginDate: Long?, lEndDate: Long?): List<Plan> {
+    override fun getPlanBy(uidStr: String, lBeginDateStr: String?, lEndDateStr: String?): List<Plan> {
+        val uid: Long = Convert.toLong(uidStr)
+        val lBeginDate: Long = Convert.toLong(lBeginDateStr)
+        val lEndDate: Long = Convert.toLong(lEndDateStr)
+
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -119,7 +126,10 @@ class PlanServiceImpl(
     }
 
     @CachePut(value = ["plan"])
-    override fun newPlan(uid: Long, lDate: Long, content: String): Plan {
+    override fun newPlan(uidStr: String, lDateStr: String, content: String): Plan {
+        val uid: Long = Convert.toLong(uidStr)
+        val lDate: Long = Convert.toLong(lDateStr)
+
         //转换时间
         var date: LocalDateTime = timestampConvert(lDate)
 
@@ -149,7 +159,10 @@ class PlanServiceImpl(
     }
 
     @CachePut(value = ["plan"], key = "#pid")
-    override fun alterPlan(pid: Long, lDate: Long?, content: String?): Plan {
+    override fun alterPlan(pidStr: String, lDateStr: String?, content: String?): Plan {
+        val pid: Long = Convert.toLong(pidStr)
+        val lDate: Long = Convert.toLong(lDateStr)
+
         //转换时间
         var date: LocalDateTime? = null
         if(lDate != null){ date = timestampConvert(lDate) }
@@ -186,7 +199,9 @@ class PlanServiceImpl(
     }
 
     @CacheEvict(value = ["plan"], key = "#pid")
-    override fun deletePlan(pid: Long): Plan {
+    override fun deletePlan(pidStr: String): Plan {
+        val pid: Long = Convert.toLong(pidStr)
+
         val dPlan: Plan? = planMapper.selectById(pid)
         if (dPlan != null) {
             val result: Int = planMapper.deleteById(pid)
