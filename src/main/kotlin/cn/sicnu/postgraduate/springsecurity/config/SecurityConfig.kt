@@ -4,6 +4,7 @@ import cn.sicnu.postgraduate.springsecurity.filter.JwtAuthenticationTokenFilter
 import cn.sicnu.postgraduate.springsecurity.service.UidUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -42,20 +43,46 @@ class SecurityConfig(
         http
             // 禁用 CSRF
             .csrf { it.disable() }
-            // 设置会话管理为无状态（STATELESS）
+            // 设置会话管理为无状态
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
             // 配置 API 的授权规则
             .authorizeHttpRequests { auth ->
-                // API端口要求认证
-                auth.requestMatchers("/api/v1/**").authenticated()
+                // 放行注册/登录/登出POST方法
+                auth.requestMatchers(
+                    HttpMethod.POST,
+                    "/v1/user",
+                    "/v1/user/"
+                ).permitAll()
+
+                // 保护所有GET和DELETE方法
+                auth.requestMatchers(
+                    HttpMethod.GET,
+                    "/v1/user/**"
+                ).authenticated()
+
+                auth.requestMatchers(
+                    HttpMethod.DELETE,
+                    "/v1/user/**"
+                ).authenticated()
+
+                // 其他POST方法默认需要认证
+                auth.requestMatchers(
+                    HttpMethod.POST,
+                    "/v1/**"
+                ).authenticated()
+
+                // 放行Swagger文档接口
+                auth.requestMatchers(
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**"
+                ).permitAll()
+
                 // 其他请求放行
                 auth.anyRequest().permitAll()
             }
-            // 启用 HTTP 基本认证
-            .httpBasic { }
-            // 添加自定义 JWT 认证过滤器，并设置顺序
+            // 添加自定义 JWT 认证过滤器
             .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
             // 启用跨域配置
             .cors { }

@@ -57,7 +57,7 @@ class DynamicServiceImpl(
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
-    @Cacheable(value = ["dynamic"], key = "#did")
+    @Cacheable(value = ["dynamic"], key = "#didStr")
      override fun getDynamic(didStr: String): Dynamic {
          val did: Long = Convert.toLong(didStr)
 
@@ -70,7 +70,7 @@ class DynamicServiceImpl(
          }
      }
 
-    @Cacheable(value = ["dynamic"], key = "#did")
+    @Cacheable(value = ["dynamic"], key = "T(java.lang.String).valueOf(#result.did)")
     override fun getDynamicBy(uidStr: String?, lBeginDateStr: String?, lEndDateStr: String?, replyIdStr: String?): List<Dynamic> {
         val uid: Long = Convert.toLong(uidStr)
         val lBeginDate: Long = Convert.toLong(lBeginDateStr)
@@ -120,7 +120,7 @@ class DynamicServiceImpl(
         return dynamics
     }
 
-    @CachePut(value = ["dynamic"])
+    @CachePut(value = ["dynamic"], key = "T(java.lang.String).valueOf(#result.did)")
     override fun newDynamic(uidStr: String, lDateStr: String, content: String, replyIdStr: String?): Dynamic {
         val uid: Long = Convert.toLong(uidStr)
         val lDate: Long = Convert.toLong(lDateStr)
@@ -136,9 +136,6 @@ class DynamicServiceImpl(
 
         val result: Int = dynamicMapper.insert(newDynamic)
         if (result == 1) {
-            val cacheKey = "dynamic:$did"
-            val cache = cacheManager.getCache("dynamic")
-            cache?.put(cacheKey, newDynamic)
             return newDynamic
         } else if (result < 1) {
             // 插入失败
@@ -151,7 +148,7 @@ class DynamicServiceImpl(
         }
     }
 
-    @CacheEvict(value = ["dynamic"], key = "#did")
+    @CacheEvict(value = ["dynamic"], key = "#didStr")
     override fun deleteDynamic(didStr: String): Dynamic {
         val did: Long = Convert.toLong(didStr)
 

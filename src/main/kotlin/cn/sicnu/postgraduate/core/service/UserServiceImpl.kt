@@ -52,9 +52,10 @@ class UserServiceImpl(
         this.environment = environment
     }
 
-    @Cacheable(value = ["user"], key = "#uid")
+    @Cacheable(value = ["user"], key = "#uidStr")
     override fun getUser(uidStr: String): User {
         val uid: Long = Convert.toLong(uidStr)
+
         val user: User? = userMapper.selectById(uid)
         return if (user != null) {
             user
@@ -64,9 +65,10 @@ class UserServiceImpl(
         }
     }
 
-    @Cacheable(value = ["user"], key = "#uid")
+    @Cacheable(value = ["user"], key = "#uidStr")
     override fun login(uidStr: String, password: String): User {
         val uid: Long = Convert.toLong(uidStr)
+
         password.let { encrypt(password) }
         val authenticationToken: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(uid, password)
         val authenticate: Authentication = authenticationManager.authenticate(authenticationToken)
@@ -80,7 +82,7 @@ class UserServiceImpl(
         return user
     }
 
-    @CachePut(value = ["user"])
+    @CachePut(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun newUser(username: String, password: String): User {
         val defaultRoleStr = environment.getProperty("security.defaultRole")
         val defaultRole = defaultRoleStr?.split(",")
@@ -95,9 +97,6 @@ class UserServiceImpl(
         val result: Int = userMapper.insert(newUser)
         when (result) {
             1 -> {
-                val cacheKey = "user:$uid"
-                val cache = cacheManager.getCache("user")
-                cache?.put(cacheKey, newUser)
                 return newUser
             }
             in Int.MIN_VALUE..0 -> {
@@ -111,9 +110,10 @@ class UserServiceImpl(
         }
     }
 
-    @CachePut(value = ["user"], key = "#uid")
+    @CachePut(value = ["user"], key = "#uidStr")
     override fun alterUser(uidStr: String, username: String?, password: String?): User {
         val uid: Long = Convert.toLong(uidStr)
+
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
             throw CustomException(CODE_UNCHANGED, MESSAGE_UNCHANGED)
@@ -148,19 +148,20 @@ class UserServiceImpl(
         }
     }
 
-    @CacheEvict(value = ["user"], key = "#uid")
+//    @CacheEvict(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun deleteUser(): User {
-        //获取用户信息
-        val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken
-        val loginUser: LoginUser = auth.getPrincipal() as LoginUser
-        val user: User? = loginUser.getUser()
-        val uid: Long = user?.getUid() ?: 0
-        if (user != null) {
-            val result: Int = userMapper.deleteById(uid)
-            when (result) {
-                1 -> {
-                    return user
-                }
+        // 获取用户信息
+        val auth = SecurityContextHolder.getContext().authentication as UsernamePasswordAuthenticationToken
+        val loginUser = auth.principal as LoginUser
+        val user = loginUser.getUser() ?: throw CustomException(CODE_MISSING, MESSAGE_MISSING)
+        val uid: Long? = user.getUid()
+        val result = userMapper.deleteById(uid)
+
+        when (result) {
+            1 -> {
+                cacheManager.getCache("user")?.evict(uid.toString())
+                return user
+            }
                 in Int.MIN_VALUE..0 -> {
                     logger.error("deleteUser: uid {}, {} 删除失败", uid, MESSAGE_DATABASE_ERROR)
                     throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
@@ -170,13 +171,9 @@ class UserServiceImpl(
                     throw CustomException(CODE_DATABASE_ERROR, MESSAGE_DATABASE_ERROR)
                 }
             }
-        } else {
-            logger.info("deleteUser: uid {}, {}", uid, MESSAGE_MISSING)
-            throw CustomException(CODE_MISSING, MESSAGE_MISSING)
-        }
     }
 
-    @CacheEvict(value=["user"], key="#uid")
+    @CacheEvict(value=["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun logout(): User {
         //获取用户信息
         val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken

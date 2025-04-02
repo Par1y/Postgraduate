@@ -61,7 +61,7 @@ class PlanServiceImpl(
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
     }
 
-    @Cacheable(value = ["plan"], key = "#pid")
+    @Cacheable(value = ["plan"], key = "#pidStr")
     override fun getPlan(pidStr: String): Plan {
         val pid: Long = Convert.toLong(pidStr)
 
@@ -75,7 +75,7 @@ class PlanServiceImpl(
         }
     }
 
-    @Cacheable(value = ["plan"], key = "#pid")
+    @Cacheable(value = ["plan"], key = "#pidStr")
     override fun getPlanBy(uidStr: String, lBeginDateStr: String?, lEndDateStr: String?): List<Plan> {
         val uid: Long = Convert.toLong(uidStr)
         val lBeginDate: Long = Convert.toLong(lBeginDateStr)
@@ -125,7 +125,7 @@ class PlanServiceImpl(
         return plans
     }
 
-    @CachePut(value = ["plan"])
+    @CachePut(value = ["plan"], key = "T(java.lang.String).valueOf(#result.pid)")
     override fun newPlan(uidStr: String, lDateStr: String, content: String): Plan {
         val uid: Long = Convert.toLong(uidStr)
         val lDate: Long = Convert.toLong(lDateStr)
@@ -143,9 +143,6 @@ class PlanServiceImpl(
 
         val result: Int = planMapper.insert(newPlan)
         if (result == 1) {
-            val cacheKey = "plan:$pid"
-            val cache = cacheManager.getCache("plan")
-            cache?.put(cacheKey, newPlan)
             return newPlan
         } else if (result < 1) {
             // 插入失败
@@ -158,7 +155,7 @@ class PlanServiceImpl(
         }
     }
 
-    @CachePut(value = ["plan"], key = "#pid")
+    @CachePut(value = ["plan"], key = "#pidStr")
     override fun alterPlan(pidStr: String, lDateStr: String?, content: String?): Plan {
         val pid: Long = Convert.toLong(pidStr)
         val lDate: Long = Convert.toLong(lDateStr)
@@ -198,7 +195,7 @@ class PlanServiceImpl(
         }
     }
 
-    @CacheEvict(value = ["plan"], key = "#pid")
+    @CacheEvict(value = ["plan"], key = "#pidStr")
     override fun deletePlan(pidStr: String): Plan {
         val pid: Long = Convert.toLong(pidStr)
 

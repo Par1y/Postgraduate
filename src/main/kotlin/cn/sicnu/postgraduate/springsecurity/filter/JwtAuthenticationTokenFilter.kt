@@ -55,51 +55,68 @@ class JwtAuthenticationTokenFilter(
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        /* token获取解析 */
-        val jwtKey = environment.getProperty("security.jwtKey")
-        var uid: Long = 0L
-        var expireTime: LocalDateTime = LocalDateTime.now().plusDays(1)
-        val token = request.getHeader("token")
-        if(!StringUtils.hasText(token)) {
-            //没有token
+        val jwtKey = environment.getProperty("security.jwtKey") ?: run {
+            logger.error("JWT密钥未配置")
+            throw JWTException("服务器配置错误")
+        }
+
+        val token = request.getHeader("token")?.takeIf { it.isNotBlank() } ?: run {
             filterChain.doFilter(request, response)
             return
         }
-        if(!JWTUtil.verify(token, jwtKey?.toByteArray())) throw JWTException("非法JWT")
+
+        // 1. 验证签名
+        if (!JWTUtil.verify(token, jwtKey.toByteArray())) {
+            throw JWTException("非法JWT签名")
+        }
+
         try {
-            val tokenPayload: JWT = JWTUtil.parseToken(token)
-            uid = tokenPayload.let{
-                val tmp: NumberWithFormat = it.getPayload("uid") as NumberWithFormat
-                tmp.toLong()
-            }
-            expireTime = tokenPayload.let {
-                val tmp: NumberWithFormat = it.getPayload("expire_time") as NumberWithFormat
-                val result = LocalDateTimeUtil.ofUTC(tmp.toLong())
-                result
-            }
-        }catch(e: Exception) {
-            logger.error(e)
-            throw JWTException("JWT内容错误")
-        }
-        if(LocalDateTime.now().isAfter(expireTime)) {
-            val cache: Cache? = cacheManager.getCache("user")
-            cache?.let { it.evictIfPresent(uid) }
-            throw JWTException("过期的JWT")
-        }
-        /*redis获取用户信息*/
-        val user: User? = cacheManager.getCache("user")?.get(uid)?.get() as? User
-        if(Objects.isNull(user)) throw CustomException(404, "用户未登录")
+            // 2. 解析Token
+            val jwt = JWTUtil.parseToken(token)
 
-        /* 加入SecurityContextHolder */
-        //构造loginUser
-        val loginUser: LoginUser = LoginUser(user)
-        //权限处理等
-        var credentials: String? = loginUser.getPassword()
-        var authorities: MutableList<out GrantedAuthority> = loginUser.getAuthorities()
-        var authToken: UsernamePasswordAuthenticationToken =
-            UsernamePasswordAuthenticationToken(loginUser, credentials, authorities)
-        SecurityContextHolder.getContext().setAuthentication(authToken)
+            // 3. 提取uid (作为字符串处理)
+            val uidStr = jwt.getPayload("uid") as? String ?: throw JWTException("缺少uid字段")
+            val userId = uidStr.toLongOrNull() ?: throw JWTException("uid格式错误")
 
-        filterChain.doFilter(request, response)
+            // 4. 提取并转换expire_time
+            val expireTimeObj = jwt.getPayload("expire_time") as? Number ?: throw JWTException("缺少expire_time字段")
+            val expiryDate = LocalDateTimeUtil.ofUTC(expireTimeObj.toLong())
+
+            logger.debug("解析JWT成功: uid=$userId, 过期时间=$expiryDate")
+
+            // 5. 验证过期时间
+            if (LocalDateTime.now().isAfter(expiryDate)) {
+                cacheManager.getCache("user")?.evictIfPresent(userId)
+                throw JWTException("JWT已过期")
+            }
+
+            // 6. 从缓存获取用户
+            val user = cacheManager.getCache("user")?.get(userId)?.get() as? User
+                ?: throw CustomException(404, "用户信息不存在")
+
+            // 7. 设置安全上下文
+            val loginUser = LoginUser(user)
+            val authentication = UsernamePasswordAuthenticationToken(
+                loginUser,
+                loginUser.password,
+                loginUser.authorities
+            )
+            SecurityContextHolder.getContext().authentication = authentication
+
+            // 8. 继续过滤器链
+            filterChain.doFilter(request, response)
+
+        } catch (e: ClassCastException) {
+            logger.error("JWT声明类型错误", e)
+            throw JWTException("JWT声明类型不匹配")
+        } catch (e: NumberFormatException) {
+            logger.error("数字格式错误", e)
+            throw JWTException("JWT声明数字格式错误")
+        } catch (e: JWTException) {
+            throw e // 重新抛出已知的JWT异常
+        } catch (e: Exception) {
+            logger.error("处理JWT时发生意外错误", e)
+            throw JWTException("处理JWT时发生错误: ${e.message}")
+        }
     }
 }
