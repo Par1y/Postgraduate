@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField
 import com.baomidou.mybatisplus.annotation.TableId
 import com.baomidou.mybatisplus.annotation.TableName
 import io.swagger.v3.oas.annotations.media.Schema
+import java.io.Serializable
 
 /*
     Dynamic
@@ -32,7 +33,7 @@ data class Dynamic(
     @TableField
     @Schema(description = "回复的源动态id，可缺省", name = "replyId")
     var replyId: Long? = null
-)
+): Serializable
 //{
 //    /* getter&setter */
 //    public fun getDid(): Long? {

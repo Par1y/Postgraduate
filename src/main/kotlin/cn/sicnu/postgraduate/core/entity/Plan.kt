@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField
 import com.baomidou.mybatisplus.annotation.TableId
 import com.baomidou.mybatisplus.annotation.TableName
 import io.swagger.v3.oas.annotations.media.Schema
+import java.io.Serializable
 
 /*
     Plan
@@ -28,7 +29,7 @@ data class Plan (
     @TableField
     @Schema(description = "计划内容", name = "content")
     private var content: String? = null
-) {
+): Serializable {
     //getter & setter
     public fun getPid(): Long? {
         return this.pid

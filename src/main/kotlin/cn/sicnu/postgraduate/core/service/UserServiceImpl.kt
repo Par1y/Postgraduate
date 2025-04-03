@@ -3,7 +3,7 @@ package cn.sicnu.postgraduate.core.service
 import cn.hutool.core.convert.Convert
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
-import org.springframework.cache.annotation.*;
+import org.springframework.cache.annotation.*
 import org.springframework.stereotype.Service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,13 +36,15 @@ class UserServiceImpl(
         //常量声明
         private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
+
         private const val MESSAGE_MISSING: String = "用户不存在"
-        private const val CODE_WRONG_PASSWORD: Int = -2
-        private const val MESSAGE_WRONG_PASSWORD: String = "密码错误"
         private const val CODE_UNCHANGED: Int = -3
         private const val MESSAGE_UNCHANGED: String = "未改动"
         private const val CODE_DATABASE_ERROR: Int = -4
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
+
+        private const val CODE_PERMISSION_DENIED: Int = -2
+        private const val MESSAGE_PERMISSION_DENIED: String = "无权限"
     }
 
     private lateinit var environment: Environment
@@ -52,8 +54,13 @@ class UserServiceImpl(
         this.environment = environment
     }
 
+
+    /*  查询用户
+        uidStr      用户id
+     */
     @Cacheable(value = ["user"], key = "#uidStr")
     override fun getUser(uidStr: String): User {
+        //参数转换
         val uid: Long = Convert.toLong(uidStr)
 
         val user: User? = userMapper.selectById(uid)
@@ -65,8 +72,13 @@ class UserServiceImpl(
         }
     }
 
+    /*  登录
+        uidStr      用户id
+        password        密码
+     */
     @Cacheable(value = ["user"], key = "#uidStr")
     override fun login(uidStr: String, password: String): User {
+        //参数转换
         val uid: Long = Convert.toLong(uidStr)
 
         password.let { encrypt(password) }
@@ -82,6 +94,10 @@ class UserServiceImpl(
         return user
     }
 
+    /*  注册
+        username        用户名
+        password        密码
+     */
     @CachePut(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun newUser(username: String, password: String): User {
         val defaultRoleStr = environment.getProperty("security.defaultRole")
@@ -110,9 +126,25 @@ class UserServiceImpl(
         }
     }
 
+    /*  修改用户
+        uidStr      用户id
+        username        用户名
+        password        密码
+     */
     @CachePut(value = ["user"], key = "#uidStr")
     override fun alterUser(uidStr: String, username: String?, password: String?): User {
-        val uid: Long = Convert.toLong(uidStr)
+        //参数转换
+        val forwardUid: Long = Convert.toLong(uidStr)
+
+        //取得用户
+        val user: User = getUser()
+        val uid: Long? = user.getUid()
+
+        //鉴权
+        if(uid != forwardUid) {
+            logger.error("alterUser: forwardUid {}, realUid: {}, {}", forwardUid, uid, MESSAGE_PERMISSION_DENIED)
+            throw CustomException(CODE_PERMISSION_DENIED, "我去黑客来袭")
+        }
 
         if (username == null && password == null) {
             logger.info("alterUser: uid {}, {}", uid, MESSAGE_UNCHANGED)
@@ -148,17 +180,19 @@ class UserServiceImpl(
         }
     }
 
+    /*  删除用户
+        无参数
+     */
 //    @CacheEvict(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun deleteUser(): User {
-        // 获取用户信息
-        val auth = SecurityContextHolder.getContext().authentication as UsernamePasswordAuthenticationToken
-        val loginUser = auth.principal as LoginUser
-        val user = loginUser.getUser() ?: throw CustomException(CODE_MISSING, MESSAGE_MISSING)
+        //获取用户信息
+        val user = getUser()
         val uid: Long? = user.getUid()
         val result = userMapper.deleteById(uid)
 
         when (result) {
             1 -> {
+                //清除缓存
                 cacheManager.getCache("user")?.evict(uid.toString())
                 return user
             }
@@ -173,17 +207,27 @@ class UserServiceImpl(
             }
     }
 
+    /*  登出
+        无参数
+     */
     @CacheEvict(value=["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun logout(): User {
         //获取用户信息
-        val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken
-        val loginUser: LoginUser = auth.getPrincipal() as LoginUser
-        val user: User = loginUser.getUser() ?: User()
+        val user = getUser()
+
         // 注解删除Redis缓存
         return user
     }
 
     private fun encrypt(password: String): String {
         return bCryptPasswordEncoder.encode(password)
+    }
+
+    private fun getUser(): User {
+        // 获取用户信息
+        val auth = SecurityContextHolder.getContext().authentication as UsernamePasswordAuthenticationToken
+        val loginUser = auth.principal as LoginUser
+        val user = loginUser.getUser() ?: throw CustomException(CODE_MISSING, MESSAGE_MISSING)
+        return user
     }
 }

@@ -1,7 +1,6 @@
 package cn.sicnu.postgraduate.core.service
 
 import cn.hutool.core.convert.Convert
-import cn.hutool.core.date.LocalDateTimeUtil
 import cn.hutool.core.lang.Snowflake
 import cn.hutool.core.util.IdUtil
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
@@ -13,11 +12,14 @@ import java.time.LocalDateTime
 import java.time.temporal.TemporalAdjusters
 import cn.sicnu.postgraduate.core.mapper.DynamicMapper
 import cn.sicnu.postgraduate.core.entity.Dynamic
+import cn.sicnu.postgraduate.core.entity.User
 import cn.sicnu.postgraduate.core.exception.CustomException
-import org.springframework.cache.CacheManager
+import cn.sicnu.postgraduate.springsecurity.entity.LoginUser
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -31,18 +33,13 @@ import java.time.ZoneOffset
     新建动态
     newDynamic: Dynamic，成功包装对象，失败空对象&错误信息
 
-    修改动态
-    alterDynamic: Dynamic，成功包装对象，失败空对象&错误信息
-
     删除动态
     deleteDynamic: Dynamic，成功包装对象，失败空对象&错误信息
  */
 @Service
 class DynamicServiceImpl(
-    private val dynamicMapper: DynamicMapper,
-    private val cacheManager: CacheManager
+    private val dynamicMapper: DynamicMapper
 ): DynamicService {
-
     companion object {
         // 日志模块
         private val logger: Logger = LoggerFactory.getLogger(DynamicServiceImpl::class.java)
@@ -55,10 +52,18 @@ class DynamicServiceImpl(
         private const val MESSAGE_DATABASE_ERROR: String = "数据库错误"
         private const val CODE_WRONG_TIME: Int = -5
         private const val MESSAGE_WRONG_TIME: String = "时间参数错误"
+
+        private const val CODE_PERMISSION_DENIED: Int = -2
+        private const val MESSAGE_PERMISSION_DENIED: String = "无权限"
     }
 
+
+    /* 查询动态
+        didStr  动态id
+     */
     @Cacheable(value = ["dynamic"], key = "#didStr")
      override fun getDynamic(didStr: String): Dynamic {
+         //转换参数
          val did: Long = Convert.toLong(didStr)
 
          val dynamic: Dynamic? = dynamicMapper.selectById(did)
@@ -70,13 +75,21 @@ class DynamicServiceImpl(
          }
      }
 
+    /* 批量查询动态
+        uidStr  用户id
+        lBeginDateStr   起始时间
+        lEndDateStr     结束时间
+        replyIdStr      所回复动态的id
+     */
     @Cacheable(value = ["dynamic"], key = "T(java.lang.String).valueOf(#result.did)")
     override fun getDynamicBy(uidStr: String?, lBeginDateStr: String?, lEndDateStr: String?, replyIdStr: String?): List<Dynamic> {
+        //转换参数
         val uid: Long = Convert.toLong(uidStr)
         val lBeginDate: Long = Convert.toLong(lBeginDateStr)
         val lEndDate: Long = Convert.toLong(lEndDateStr)
         val replyId: Long = Convert.toLong(replyIdStr)
 
+        //设置本周起始时间
         val startOfWeek = LocalDateTime.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             .withHour(0)
             .withMinute(0)
@@ -120,15 +133,31 @@ class DynamicServiceImpl(
         return dynamics
     }
 
+    /*  新建动态
+         uidStr     用户id
+         lDateStr       创建时间（timestamp milliseconds）
+         content        内容
+         replyIdStr     所回复的动态id
+     */
     @CachePut(value = ["dynamic"], key = "T(java.lang.String).valueOf(#result.did)")
     override fun newDynamic(uidStr: String, lDateStr: String, content: String, replyIdStr: String?): Dynamic {
+        //转换参数
         val uid: Long = Convert.toLong(uidStr)
         val lDate: Long = Convert.toLong(lDateStr)
         val replyId: Long = Convert.toLong(replyIdStr)
 
+        //鉴权
+        val user: User = getUser()
+        if(user.getUid() != uid) {
+            //鉴权失败，试图冒充他人
+            logger.error("newDynamic: forwardUid: {},realUid: {}, {}", uid, user.getUid(), MESSAGE_PERMISSION_DENIED)
+            throw CustomException(CODE_PERMISSION_DENIED, MESSAGE_PERMISSION_DENIED)
+        }
+
         //转换时间
         var date: LocalDateTime = timestampConvert(lDate)
 
+        //生成动态
         val snowFlake: Snowflake = IdUtil.getSnowflake()
         val did: Long = snowFlake.nextId()
         val newDynamic: Dynamic = Dynamic(did, uid, date, content)
@@ -148,12 +177,25 @@ class DynamicServiceImpl(
         }
     }
 
+    /*  删除动态
+        didStr      动态id
+     */
     @CacheEvict(value = ["dynamic"], key = "#didStr")
     override fun deleteDynamic(didStr: String): Dynamic {
+        //转换参数
         val did: Long = Convert.toLong(didStr)
 
         val dDynamic: Dynamic? = dynamicMapper.selectById(did)
         if (dDynamic != null) {
+            //鉴权
+            val user: User = getUser()
+            if(user.getUid() != dDynamic.uid) {
+                //鉴权失败，试图删除他人动态
+                logger.error("deleteDynamic: did {},uid: {}, {}", did, user.getUid(), MESSAGE_PERMISSION_DENIED)
+                throw CustomException(CODE_PERMISSION_DENIED, MESSAGE_PERMISSION_DENIED)
+            }
+
+            //删除动态
             val result: Int = dynamicMapper.deleteById(did)
             if (result == 1) {
                 return dDynamic
@@ -174,5 +216,12 @@ class DynamicServiceImpl(
 
     private fun timestampConvert(lDate: Long): LocalDateTime {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(lDate), ZoneOffset.UTC)
+    }
+
+    private fun getUser(): User{
+        val auth: UsernamePasswordAuthenticationToken = SecurityContextHolder.getContext().getAuthentication() as UsernamePasswordAuthenticationToken
+        val loginUser: LoginUser = auth.getPrincipal() as LoginUser
+        val user: User = loginUser.getUser() ?: User()
+        return user
     }
 }
