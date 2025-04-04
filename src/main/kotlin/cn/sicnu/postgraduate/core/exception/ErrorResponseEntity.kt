@@ -1,5 +1,9 @@
 package cn.sicnu.postgraduate.core.exception
 
+/**
+ * 错误响应体
+ * @author Par1y
+ */
 class ErrorResponseEntity(
     private var code: Int? = null,
     private var message: String? = null

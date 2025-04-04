@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 /**
  * 全局异常处理
+ * @author Par1y
  */
 @RestControllerAdvice
 class GlobalExceptionHandler: ResponseEntityExceptionHandler() {

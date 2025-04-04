@@ -22,6 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
 
+/**
+ * 用户服务实现
+ */
 @Service
 class UserServiceImpl(
     private val userMapper: UserMapper,
@@ -36,7 +39,6 @@ class UserServiceImpl(
         //常量声明
         private const val CODE_SUCCESS: Int = 0
         private const val CODE_MISSING: Int = -1
-
         private const val MESSAGE_MISSING: String = "用户不存在"
         private const val CODE_UNCHANGED: Int = -3
         private const val MESSAGE_UNCHANGED: String = "未改动"
@@ -54,10 +56,6 @@ class UserServiceImpl(
         this.environment = environment
     }
 
-
-    /*  查询用户
-        uidStr      用户id
-     */
     @Cacheable(value = ["user"], key = "#uidStr")
     override fun getUser(uidStr: String): User {
         //参数转换
@@ -72,10 +70,6 @@ class UserServiceImpl(
         }
     }
 
-    /*  登录
-        uidStr      用户id
-        password        密码
-     */
     @Cacheable(value = ["user"], key = "#uidStr")
     override fun login(uidStr: String, password: String): User {
         //参数转换
@@ -94,10 +88,6 @@ class UserServiceImpl(
         return user
     }
 
-    /*  注册
-        username        用户名
-        password        密码
-     */
     @CachePut(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun newUser(username: String, password: String): User {
         val defaultRoleStr = environment.getProperty("security.defaultRole")
@@ -126,11 +116,6 @@ class UserServiceImpl(
         }
     }
 
-    /*  修改用户
-        uidStr      用户id
-        username        用户名
-        password        密码
-     */
     @CachePut(value = ["user"], key = "#uidStr")
     override fun alterUser(uidStr: String, username: String?, password: String?): User {
         //参数转换
@@ -180,9 +165,6 @@ class UserServiceImpl(
         }
     }
 
-    /*  删除用户
-        无参数
-     */
 //    @CacheEvict(value = ["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun deleteUser(): User {
         //获取用户信息
@@ -207,9 +189,6 @@ class UserServiceImpl(
             }
     }
 
-    /*  登出
-        无参数
-     */
     @CacheEvict(value=["user"], key = "T(java.lang.String).valueOf(#result.uid)")
     override fun logout(): User {
         //获取用户信息
